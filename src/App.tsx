@@ -21,7 +21,7 @@ import {
   MarketPage,
   PersonalItemsPage,
   PvpAssistantPage,
-  AiAdvisorPage,
+  // AiAdvisorPage,
   VaultPage,
   CollectionPage,
   WatchlistPage,
@@ -53,7 +53,7 @@ function App() {
               <Route path="/market" element={<MarketPage />} />
               <Route path="/items" element={<PersonalItemsPage />} />
               <Route path="/pvp-assistant" element={<PvpAssistantPage />} />
-              <Route path="/advisor" element={<AiAdvisorPage />} />
+              {/* <Route path="/advisor" element={<AiAdvisorPage />} /> */}
               <Route path="/vault" element={<VaultPage />} />
               <Route path="/collection" element={<CollectionPage />} />
               <Route path="/watchlist" element={<WatchlistPage />} />

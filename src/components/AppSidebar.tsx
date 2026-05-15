@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { LayoutDashboard, LogOut, Settings, Swords, Timer, Shield, Users, Skull, ShoppingCart, Package, Crosshair, Brain, Lock, Trophy, Eye } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, Swords, Timer, Shield, Users, Skull, ShoppingCart, Package, Crosshair, Lock, Trophy, Eye } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -41,7 +41,7 @@ const gameNav = [
   { href: "/vault", label: "Vault", icon: Lock },
   { href: "/collection", label: "Collection", icon: Trophy },
   { href: "/watchlist", label: "Watchlist", icon: Eye },
-  { href: "/advisor", label: "AI Advisor", icon: Brain },
+
 ];
 
 function NavLink({

@@ -1773,7 +1773,7 @@ export const getProfessionStatus = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    return await ctx.db.query("professionStatus").withIndex("by_userId", (q) => q.eq("userId", userId)).unique();
+    return await ctx.db.query("professionStatus").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
   },
 });
 
