@@ -32,7 +32,7 @@ function ContribStat({ label, value, icon }: { label: string; value: string; ico
   );
 }
 
-type GuildTab = "overview" | "members" | "sanctuary" | "contribution";
+type GuildTab = "overview" | "members" | "sanctuary" | "power" | "bank" | "contribution";
 
 export function GuildPage() {
   const guild = useQuery(api.gameData.getGuildInfo);
@@ -143,20 +143,36 @@ export function GuildPage() {
         </div>
       )}
 
-      {/* Tab switcher */}
-      <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
-        {(["overview", "members", "sanctuary", "contribution"] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
-              activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            {tab === "overview" ? `Wars (${activeWars.length})` : tab === "members" ? `Members (${members.length})` : tab === "sanctuary" ? "Sanctuary" : "Contribution"}
-          </button>
-        ))}
+      {/* Tab switcher — 2 rows for 6 tabs */}
+      <div className="space-y-1">
+        <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
+          {(["overview", "members", "power"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
+                activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              {tab === "overview" ? `Wars (${activeWars.length})` : tab === "members" ? `Members (${members.length})` : "Power"}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
+          {(["sanctuary", "bank", "contribution"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
+                activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              {tab === "sanctuary" ? "Sanctuary" : tab === "bank" ? "Bank" : "Contribution"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Overview Tab - Guild Wars */}
@@ -307,6 +323,95 @@ export function GuildPage() {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* Power Tab (from video: Rank 5/5, 5,953 PP, tier bonuses) */}
+      {activeTab === "power" && (
+        <div className="space-y-2">
+          <div className="game-card">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-gold-dim uppercase tracking-wider">Guild Power</h3>
+              <Badge className="text-[9px] bg-primary/15 text-primary border-0">Rank 5/5</Badge>
+            </div>
+            <div className="text-center mb-4">
+              <p className="text-3xl font-bold text-gold">5,953</p>
+              <p className="text-[10px] text-muted-foreground">Power Points</p>
+            </div>
+            <div className="space-y-2">
+              {[
+                { rank: 1, pp: 0, bonus: "+2% Guild EXP", active: true },
+                { rank: 2, pp: 500, bonus: "+5% Guild EXP, +1 War Slot", active: true },
+                { rank: 3, pp: 1500, bonus: "+10% Guild EXP, +2 War Slots", active: true },
+                { rank: 4, pp: 3000, bonus: "+15% Guild EXP, +3 War Slots, Sanctuary Unlock", active: true },
+                { rank: 5, pp: 5000, bonus: "+20% Guild EXP, +5 War Slots, Advanced Perks", active: true },
+              ].map((tier) => (
+                <div key={tier.rank} className={`flex items-center justify-between p-2 rounded-md ${
+                  tier.active ? "bg-primary/5 border border-primary/20" : "bg-muted/20 border border-transparent"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`size-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                      tier.active ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                    }`}>{tier.rank}</div>
+                    <span className="text-[11px] font-medium">{tier.bonus}</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{formatNumber(tier.pp)} PP</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Tab (from video: 3.1B balance) */}
+      {activeTab === "bank" && (
+        <div className="space-y-2">
+          <div className="game-card text-center py-4">
+            <Coins className="size-8 text-gold-accent mx-auto mb-2" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Guild Bank Balance</p>
+            <p className="text-2xl font-bold text-gold mt-1">{formatGold(3104798179)}</p>
+          </div>
+          <div className="game-card">
+            <h3 className="text-xs font-semibold text-gold-dim uppercase tracking-wider mb-3">Actions</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <button type="button" className="p-3 rounded-lg bg-success/10 border border-success/20 text-center hover:bg-success/15 transition-colors">
+                <Coins className="size-4 text-success mx-auto mb-1" />
+                <span className="text-[10px] font-medium text-success">Deposit</span>
+              </button>
+              <button type="button" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center hover:bg-destructive/15 transition-colors">
+                <Coins className="size-4 text-destructive mx-auto mb-1" />
+                <span className="text-[10px] font-medium text-destructive">Withdraw</span>
+              </button>
+              <button type="button" className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center hover:bg-primary/15 transition-colors">
+                <Users className="size-4 text-primary mx-auto mb-1" />
+                <span className="text-[10px] font-medium text-primary">Distribute</span>
+              </button>
+            </div>
+            <p className="text-[9px] text-muted-foreground text-center mt-2">
+              Bank actions require API key · Read-only mode
+            </p>
+          </div>
+          <div className="game-card">
+            <h3 className="text-xs font-semibold text-gold-dim uppercase tracking-wider mb-2">Recent Transactions</h3>
+            <div className="space-y-1.5">
+              {[
+                { player: "DeerKing", type: "deposit", amount: 50000000, time: "2h ago" },
+                { player: "ForestArcher", type: "deposit", amount: 25000000, time: "5h ago" },
+                { player: "The Guy", type: "deposit", amount: 10000000, time: "1d ago" },
+                { player: "AntlerSmash", type: "deposit", amount: 35000000, time: "2d ago" },
+              ].map((tx, i) => (
+                <div key={`tx-${i}`} className="flex items-center justify-between p-1.5 rounded-md bg-secondary/30">
+                  <div>
+                    <p className="text-[11px] font-medium">{tx.player}</p>
+                    <p className="text-[9px] text-muted-foreground">{tx.time}</p>
+                  </div>
+                  <span className={`text-[11px] font-bold ${tx.type === "deposit" ? "text-success" : "text-destructive"}`}>
+                    {tx.type === "deposit" ? "+" : "-"}{formatGold(tx.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

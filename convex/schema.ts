@@ -434,6 +434,49 @@ const schema = defineSchema({
   })
     .index("by_userId", ["userId"]),
 
+  // Tasks (daily/weekly/monthly)
+  tasks: defineTable({
+    userId: v.id("users"),
+    taskType: v.string(), // "daily" | "weekly" | "monthly"
+    description: v.string(),
+    currentAmount: v.number(),
+    targetAmount: v.number(),
+    expReward: v.number(),
+    otherReward: v.optional(v.string()),
+    isCompleted: v.boolean(),
+    refreshAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"]),
+
+  // Active Modifiers (travel/chest/battle/quest)
+  activeModifiers: defineTable({
+    userId: v.id("users"),
+    category: v.string(), // "travel" | "chest" | "battle" | "quest"
+    modifierType: v.string(), // "step_speed" | "experience" | "drop_rate" | "gold"
+    totalPercent: v.number(),
+    sourceCount: v.number(),
+    sources: v.array(v.object({
+      name: v.string(),
+      percent: v.number(),
+      expiresAt: v.optional(v.number()),
+      isPermanent: v.boolean(),
+    })),
+  })
+    .index("by_userId", ["userId"]),
+
+  // Profession status
+  professionStatus: defineTable({
+    userId: v.id("users"),
+    professionName: v.string(),
+    professionLevel: v.number(),
+    isWorking: v.boolean(),
+    finishesAt: v.optional(v.number()),
+    expReward: v.optional(v.number()),
+    profPointReward: v.optional(v.number()),
+    goldReward: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"]),
+
   // App settings
   appSettings: defineTable({
     userId: v.id("users"),

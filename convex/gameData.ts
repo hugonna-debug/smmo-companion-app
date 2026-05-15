@@ -602,7 +602,11 @@ export const seedDemoData = mutation({
       const hasCollection = await ctx.db.query("collectionProgress").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
       const hasWatchlist = await ctx.db.query("playerWatchlist").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
       // If has all fields and all new tables, skip
-      if (existing.bank !== undefined && existing.spAtkDamage !== undefined && hasVault && hasCollection && hasWatchlist) {
+      const hasTasks = await ctx.db.query("tasks").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
+      const hasModifiers = await ctx.db.query("activeModifiers").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
+      const hasProfession = await ctx.db.query("professionStatus").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
+      // If has all fields and all tables, skip
+      if (existing.bank !== undefined && existing.spAtkDamage !== undefined && existing.safeMode === true && hasVault && hasCollection && hasWatchlist && hasTasks && hasModifiers && hasProfession) {
         return null;
       }
       // Stale data — clear everything and re-seed below
@@ -611,7 +615,7 @@ export const seedDemoData = mutation({
         "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
         "worldBosses", "diamondMarket", "orphanage", "appSettings",
         "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
-        "vaultCodes", "collectionProgress", "playerWatchlist",
+        "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
       ] as const;
       for (const table of tables) {
         const docs = await ctx.db
@@ -654,14 +658,14 @@ export const seedDemoData = mutation({
       dailiesUnlocked: 186,
       chestsOpened: 12143,
       guildId: 1337,
-      guildName: "The Deers",
-      safeMode: false,
+      guildName: "Eternal Gladiators",
+      safeMode: true,
       // V2 fields
       energy: 500,
       maxEnergy: 500,
       questPoints: 250,
       maxQuestPoints: 250,
-      availableStatPoints: 0,
+      availableStatPoints: 112,
       membership: 1,
       // Stat breakdown — real values from Profile Stats screenshot
       // STR: 52,400 total. Most from gear (+29,550 from equipment) + core base
@@ -754,26 +758,26 @@ export const seedDemoData = mutation({
     await ctx.db.insert("guildInfo", {
       userId,
       guildId: 1337,
-      name: "The Deers",
-      tag: "DEER",
+      name: "Eternal Gladiators",
+      tag: "EG",
       ownerId: 112045,
       exp: 4582100,
       currentSeasonExp: 891250,
       legacyExp: 22950,
-      memberCount: 42,
+      memberCount: 50,
       eligibleForWar: true,
       icon: "S_Holy03.png",
     });
 
     // ── Guild Members ──
     const members = [
-      { memberId: 112045, memberName: "DeerKing", position: "Leader", level: 31200, safeMode: false, currentHp: 210000, maxHp: 210000, warrior: true, steps: 45200, npcKills: 67000, pvpKills: 49200, lastActivity: now - 300000 },
-      { memberId: 1143782, memberName: "The Guy", position: "Member", level: 29727, safeMode: false, currentHp: 148710, maxHp: 148710, warrior: true, steps: 30845, npcKills: 30116, pvpKills: 29427, lastActivity: now - 60000 },
-      { memberId: 234567, memberName: "ForestArcher", position: "Officer", level: 28450, safeMode: false, currentHp: 178000, maxHp: 185000, warrior: true, steps: 38500, npcKills: 51200, pvpKills: 34300, lastActivity: now - 1800000 },
+      { memberId: 112045, memberName: "DeerKing", position: "Leader", level: 31200, safeMode: true, currentHp: 210000, maxHp: 210000, warrior: true, steps: 45200, npcKills: 67000, pvpKills: 49200, lastActivity: now - 300000 },
+      { memberId: 1143782, memberName: "The Guy", position: "Member", level: 29727, safeMode: true, currentHp: 148710, maxHp: 148710, warrior: true, steps: 30845, npcKills: 30116, pvpKills: 29427, lastActivity: now - 60000 },
+      { memberId: 234567, memberName: "ForestArcher", position: "Officer", level: 28450, safeMode: true, currentHp: 178000, maxHp: 185000, warrior: true, steps: 38500, npcKills: 51200, pvpKills: 34300, lastActivity: now - 1800000 },
       { memberId: 345678, memberName: "StoneGuard", position: "Member", level: 25100, safeMode: true, currentHp: 125000, maxHp: 125000, warrior: false, steps: 27000, npcKills: 28900, pvpKills: 3200, lastActivity: now - 7200000 },
-      { memberId: 456789, memberName: "MoonlitBlade", position: "Officer", level: 30500, safeMode: false, currentHp: 45000, maxHp: 168000, warrior: true, steps: 39800, npcKills: 45600, pvpKills: 41800, lastActivity: now - 900000 },
-      { memberId: 567890, memberName: "WildFawn", position: "Member", level: 22300, safeMode: false, currentHp: 98000, maxHp: 105000, warrior: false, steps: 18500, npcKills: 19800, pvpKills: 2100, lastActivity: now - 86400000 },
-      { memberId: 678901, memberName: "AntlerSmash", position: "Member", level: 27800, safeMode: false, currentHp: 152000, maxHp: 152000, warrior: true, steps: 34000, npcKills: 38100, pvpKills: 29800, lastActivity: now - 420000 },
+      { memberId: 456789, memberName: "MoonlitBlade", position: "Officer", level: 30500, safeMode: true, currentHp: 45000, maxHp: 168000, warrior: true, steps: 39800, npcKills: 45600, pvpKills: 41800, lastActivity: now - 900000 },
+      { memberId: 567890, memberName: "WildFawn", position: "Member", level: 22300, safeMode: true, currentHp: 98000, maxHp: 105000, warrior: false, steps: 18500, npcKills: 19800, pvpKills: 2100, lastActivity: now - 86400000 },
+      { memberId: 678901, memberName: "AntlerSmash", position: "Member", level: 27800, safeMode: true, currentHp: 152000, maxHp: 152000, warrior: true, steps: 34000, npcKills: 38100, pvpKills: 29800, lastActivity: now - 420000 },
     ];
     for (const m of members) {
       await ctx.db.insert("guildMembers", { userId, ...m });
@@ -813,7 +817,7 @@ export const seedDemoData = mutation({
       {
         tierKey: "tier_2", tierName: "Tier 2",
         effects: ["+25% Raid EXP (Guild)", "+10% PvP EXP (Guild)", "+35% Gather EXP (Guild)"],
-        currentValue: 32500000, targetValue: 50000000, percentage: 65, isActive: false, inProgress: true,
+        currentValue: 27351000, targetValue: 50000000, percentage: 55, isActive: false, inProgress: true,
       },
       {
         tierKey: "tier_3", tierName: "Tier 3",
@@ -891,13 +895,18 @@ export const seedDemoData = mutation({
     const orphanageTiers = [
       {
         tierKey: "tier_1", tierName: "Tier 1",
-        effects: ["+35% Rarity Rate (Travel)", "+10% EXP (Travel)", "+5% Rarity Rate (Chest)"],
-        currentValue: 245000000, targetValue: 350000000, percentage: 70, isActive: false, inProgress: true,
+        effects: ["+35% Rarity Rate (Travel)", "+10% EXP (Travel)", "+10% Rarity Rate (Chest)"],
+        currentValue: 350000000, targetValue: 350000000, percentage: 100, isActive: true, inProgress: false,
       },
       {
         tierKey: "tier_2", tierName: "Tier 2",
-        effects: ["+50% Rarity Rate (Travel)", "+15% EXP (Travel)", "+15% Rarity Rate (Chest)"],
-        currentValue: 0, targetValue: 500000000, percentage: 0, isActive: false, inProgress: false,
+        effects: ["+50% Rarity Rate (Travel)", "+15% EXP (Travel)", "+15% Rarity Rate (Chest)", "+2% Gold (Travel)"],
+        currentValue: 500000000, targetValue: 500000000, percentage: 100, isActive: true, inProgress: false,
+      },
+      {
+        tierKey: "tier_3", tierName: "Tier 3",
+        effects: ["+80% Rarity Rate (Travel)", "+30% EXP (Travel)", "+30% Rarity Rate (Chest)", "+5% Gold (Travel)"],
+        currentValue: 200000000, targetValue: 1000000000, percentage: 20, isActive: false, inProgress: true,
       },
     ];
     for (const tier of orphanageTiers) {
@@ -1087,6 +1096,73 @@ export const seedDemoData = mutation({
     for (const c of collectionData) {
       await ctx.db.insert("collectionProgress", { userId, ...c });
     }
+
+    // ── Tasks (DAILY/WEEKLY/MONTHLY from video) ──
+    const tasksData = [
+      // Daily tasks
+      { taskType: "daily", description: "Defeat 50 NPCs", currentAmount: 12, targetAmount: 50, expReward: 125000, isCompleted: false },
+      { taskType: "daily", description: "Win 15 PvP battles", currentAmount: 15, targetAmount: 15, expReward: 200000, otherReward: "1x Bronze Key", isCompleted: true },
+      { taskType: "daily", description: "Take 500 steps", currentAmount: 234, targetAmount: 500, expReward: 80000, isCompleted: false },
+      { taskType: "daily", description: "Complete 10 quests", currentAmount: 3, targetAmount: 10, expReward: 150000, isCompleted: false },
+      { taskType: "daily", description: "Gather 20 materials", currentAmount: 8, targetAmount: 20, expReward: 95000, isCompleted: false },
+      { taskType: "daily", description: "Craft 5 items", currentAmount: 0, targetAmount: 5, expReward: 110000, isCompleted: false },
+      { taskType: "daily", description: "Earn 100,000 gold", currentAmount: 45000, targetAmount: 100000, expReward: 75000, isCompleted: false },
+      // Weekly tasks
+      { taskType: "weekly", description: "Kill 200 players in PvP", currentAmount: 147, targetAmount: 200, expReward: 890000, otherReward: "1x Gold Key", isCompleted: false, refreshAt: now + 5 * 86400000 },
+      { taskType: "weekly", description: "Complete 70 quests", currentAmount: 42, targetAmount: 70, expReward: 750000, otherReward: "1x Gold Key", isCompleted: false, refreshAt: now + 5 * 86400000 },
+      { taskType: "weekly", description: "Take 3,500 steps", currentAmount: 1890, targetAmount: 3500, expReward: 600000, isCompleted: false, refreshAt: now + 5 * 86400000 },
+      { taskType: "weekly", description: "Gather 150 materials", currentAmount: 67, targetAmount: 150, expReward: 500000, isCompleted: false, refreshAt: now + 5 * 86400000 },
+      // Monthly tasks (from video: Kill 395 PvP ✅, Gather 675, Quests 740, Craft 145)
+      { taskType: "monthly", description: "Kill 395 players in PvP", currentAmount: 395, targetAmount: 395, expReward: 2080960, otherReward: "2x Gold Keys", isCompleted: true, refreshAt: now + 12 * 86400000 },
+      { taskType: "monthly", description: "Gather 675 materials while travelling", currentAmount: 7, targetAmount: 675, expReward: 2080960, otherReward: "2x Gold Keys", isCompleted: false, refreshAt: now + 12 * 86400000 },
+      { taskType: "monthly", description: "Successfully perform 740 quests", currentAmount: 168, targetAmount: 740, expReward: 2080960, otherReward: "2x Gold Keys", isCompleted: false, refreshAt: now + 12 * 86400000 },
+      { taskType: "monthly", description: "Craft 145 items", currentAmount: 16, targetAmount: 145, expReward: 2080960, otherReward: "2x Gold Keys", isCompleted: false, refreshAt: now + 12 * 86400000 },
+    ];
+    for (const t of tasksData) {
+      await ctx.db.insert("tasks", { userId, ...t });
+    }
+
+    // ── Active Modifiers (from video Active Modifiers screen) ──
+    const modifiersData = [
+      // Travel modifiers
+      { category: "travel", modifierType: "step_speed", totalPercent: 5, sourceCount: 1, sources: [
+        { name: "Orphanage", percent: 5, isPermanent: false },
+      ]},
+      { category: "travel", modifierType: "experience", totalPercent: 20, sourceCount: 2, sources: [
+        { name: "Potion", percent: 5, expiresAt: now + 158000, isPermanent: false },
+        { name: "Temple", percent: 15, expiresAt: now + 3578000, isPermanent: false },
+      ]},
+      { category: "travel", modifierType: "drop_rate", totalPercent: 5, sourceCount: 1, sources: [
+        { name: "Orphanage", percent: 5, isPermanent: false },
+      ]},
+      // Chest modifiers
+      { category: "chest", modifierType: "drop_rate", totalPercent: 5, sourceCount: 1, sources: [
+        { name: "Orphanage", percent: 5, isPermanent: false },
+      ]},
+      // Battle modifiers
+      { category: "battle", modifierType: "experience", totalPercent: 15, sourceCount: 1, sources: [
+        { name: "Temple", percent: 15, expiresAt: now + 3578000, isPermanent: false },
+      ]},
+      // Quest modifiers
+      { category: "quest", modifierType: "experience", totalPercent: 10, sourceCount: 1, sources: [
+        { name: "Sanctuary", percent: 10, isPermanent: false },
+      ]},
+    ];
+    for (const m of modifiersData) {
+      await ctx.db.insert("activeModifiers", { userId, ...m });
+    }
+
+    // ── Profession Status (Warrior from video) ──
+    await ctx.db.insert("professionStatus", {
+      userId,
+      professionName: "Warrior",
+      professionLevel: 409,
+      isWorking: true,
+      finishesAt: now + 2398000, // ~40 min
+      expReward: 23938,
+      profPointReward: 238,
+      goldReward: 100,
+    });
 
     // ── Player Watchlist ──
     const watchlistData = [
@@ -1624,6 +1700,80 @@ export const updateWatchlistNotes = mutation({
     const entry = await ctx.db.get(args.entryId);
     if (entry && entry.userId === userId) await ctx.db.patch(args.entryId, { notes: args.notes });
     return null;
+  },
+});
+
+
+// ── Tasks ──
+
+export const getTasks = query({
+  args: {},
+  returns: v.union(v.array(v.object({
+    _id: v.id("tasks"),
+    _creationTime: v.number(),
+    userId: v.id("users"),
+    taskType: v.string(),
+    description: v.string(),
+    currentAmount: v.number(),
+    targetAmount: v.number(),
+    expReward: v.number(),
+    otherReward: v.optional(v.string()),
+    isCompleted: v.boolean(),
+    refreshAt: v.optional(v.number()),
+  })), v.null()),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db.query("tasks").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+  },
+});
+
+// ── Active Modifiers ──
+
+export const getActiveModifiers = query({
+  args: {},
+  returns: v.union(v.array(v.object({
+    _id: v.id("activeModifiers"),
+    _creationTime: v.number(),
+    userId: v.id("users"),
+    category: v.string(),
+    modifierType: v.string(),
+    totalPercent: v.number(),
+    sourceCount: v.number(),
+    sources: v.array(v.object({
+      name: v.string(),
+      percent: v.number(),
+      expiresAt: v.optional(v.number()),
+      isPermanent: v.boolean(),
+    })),
+  })), v.null()),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db.query("activeModifiers").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+  },
+});
+
+// ── Profession Status ──
+
+export const getProfessionStatus = query({
+  args: {},
+  returns: v.union(v.object({
+    _id: v.id("professionStatus"),
+    _creationTime: v.number(),
+    userId: v.id("users"),
+    professionName: v.string(),
+    professionLevel: v.number(),
+    isWorking: v.boolean(),
+    finishesAt: v.optional(v.number()),
+    expReward: v.optional(v.number()),
+    profPointReward: v.optional(v.number()),
+    goldReward: v.optional(v.number()),
+  }), v.null()),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db.query("professionStatus").withIndex("by_userId", (q) => q.eq("userId", userId)).unique();
   },
 });
 

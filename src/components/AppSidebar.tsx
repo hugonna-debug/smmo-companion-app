@@ -34,7 +34,7 @@ const gameNav = [
   { href: "/pvp-assistant", label: "PvP Assistant", icon: Crosshair },
   { href: "/guild", label: "Guild Hub", icon: Users },
   { href: "/bosses", label: "World Bosses", icon: Skull },
-  { href: "/buffs", label: "Buffs & Timers", icon: Timer },
+  { href: "/buffs", label: "Active Modifiers", icon: Timer },
   { href: "/equipment", label: "Equipment", icon: Shield },
   { href: "/market", label: "Market Tracker", icon: ShoppingCart },
   { href: "/items", label: "Item Tracker", icon: Package },

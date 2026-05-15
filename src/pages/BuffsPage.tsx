@@ -1,76 +1,126 @@
 import { useQuery } from "convex/react";
-import { Timer, AlertTriangle, Home, Zap } from "lucide-react";
+import { Timer, Home, Zap, ChevronDown, ChevronRight, Footprints, Sparkles, Target, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { formatGold, formatTimeRemaining } from "@/lib/gameUtils";
 
-export function BuffsPage() {
-  const buffs = useQuery(api.gameData.getBuffs);
-  const orphanage = useQuery(api.gameData.getOrphanage);
+// Category display info matching real SMMO Active Modifiers page
+const CATEGORY_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  travel: { label: "Travel", icon: <Footprints className="size-4" />, color: "text-chart-5" },
+  chest: { label: "Chest", icon: <Target className="size-4" />, color: "text-gold-accent" },
+  battle: { label: "Battle", icon: <Shield className="size-4" />, color: "text-destructive" },
+  quest: { label: "Quest", icon: <Sparkles className="size-4" />, color: "text-blue-400" },
+};
 
-  if (buffs === undefined) {
+const MODIFIER_LABELS: Record<string, string> = {
+  step_speed: "Step Speed",
+  experience: "Experience",
+  drop_rate: "Drop Rate",
+  gold: "Gold",
+};
+
+export function BuffsPage() {
+  const modifiers = useQuery(api.gameData.getActiveModifiers);
+  const orphanage = useQuery(api.gameData.getOrphanage);
+  const [expandedCat, setExpandedCat] = useState<string | null>(null);
+
+  if (modifiers === undefined) {
     return (
       <div className="p-3 md:p-4 space-y-3">
         <div className="h-6 w-40 rounded bg-muted animate-pulse" />
-        {[...Array(3)].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div key={`bskel-${i}`} className="game-card h-20 animate-pulse" />
         ))}
       </div>
     );
   }
 
-  const active = buffs.filter((b) => b.expiresAt > Date.now());
-  const expired = buffs.filter((b) => b.expiresAt <= Date.now());
+  // Group modifiers by category
+  const categories = ["travel", "chest", "battle", "quest"];
+  const byCat: Record<string, typeof modifiers extends (infer T)[] | null ? T[] : never[]> = {};
+  for (const cat of categories) {
+    byCat[cat] = (modifiers || []).filter((m) => m.category === cat);
+  }
+
+  // Count total active modifiers
+  const totalMods = (modifiers || []).length;
 
   return (
     <div className="p-3 md:p-4 space-y-3 max-w-4xl">
-      <div className="flex items-center gap-2">
-        <Timer className="size-5 text-chart-2" />
-        <h1 className="text-lg font-bold">Buffs & Timers</h1>
+      {/* Header - matches SMMO "Your Stats" > Active Modifiers */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Timer className="size-5 text-chart-2" />
+          <h1 className="text-lg font-bold">Active Modifiers</h1>
+        </div>
+        {totalMods > 0 && (
+          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+            {totalMods} active
+          </Badge>
+        )}
       </div>
 
-      {active.length === 0 && expired.length === 0 ? (
+      {/* Modifier Categories (matching real SMMO layout) */}
+      {totalMods === 0 ? (
         <div className="game-card text-center py-10">
           <Timer className="size-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">No active buffs</p>
-          <p className="text-[11px] text-muted-foreground/60 mt-1">Buffs will appear here when active</p>
+          <p className="text-sm text-muted-foreground">No active modifiers</p>
+          <p className="text-[11px] text-muted-foreground/60 mt-1">
+            Modifiers from Temple, Potions, Orphanage, Sanctuary appear here
+          </p>
         </div>
       ) : (
-        <>
-          {active.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1">
-                Active ({active.length})
-              </p>
-              {active.map((buff) => (
-                <BuffCard key={buff._id} buff={buff} />
-              ))}
-            </div>
-          )}
+        <div className="space-y-2">
+          {categories.map((cat) => {
+            const catMods = byCat[cat];
+            if (!catMods || catMods.length === 0) return null;
+            const meta = CATEGORY_META[cat];
+            const isExpanded = expandedCat === cat;
 
-          {expired.length > 0 && (
-            <div className="space-y-2 pt-2">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1">
-                Expired ({expired.length})
-              </p>
-              {expired.map((buff) => (
-                <BuffCard key={buff._id} buff={buff} />
-              ))}
-            </div>
-          )}
-        </>
+            return (
+              <div key={cat} className="game-card">
+                {/* Category Header */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedCat(isExpanded ? null : cat)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={meta.color}>{meta.icon}</span>
+                    <span className="text-sm font-bold">{meta.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {catMods.length} modifier{catMods.length > 1 ? "s" : ""}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronDown className="size-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="size-4 text-muted-foreground" />
+                    )}
+                  </div>
+                </button>
+
+                {/* Modifier rows (always visible as summary) */}
+                <div className="mt-2 space-y-2">
+                  {catMods.map((mod) => (
+                    <ModifierRow key={mod._id} mod={mod} isExpanded={isExpanded} color={meta.color} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Orphanage Section */}
       {orphanage && orphanage.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-1">
-            <Home className="size-3.5 text-chart-2" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-              Orphanage Tiers
-            </p>
+            <Home className="size-4 text-chart-2" />
+            <p className="text-sm font-bold">Orphanage</p>
           </div>
           {orphanage.map((tier) => (
             <div key={tier._id} className={`game-card ${tier.inProgress ? "border-chart-2/20" : ""}`}>
@@ -79,7 +129,7 @@ export function BuffsPage() {
                   <Zap className={`size-3.5 ${tier.isActive ? "text-primary" : tier.inProgress ? "text-chart-2" : "text-muted-foreground"}`} />
                   <span className="text-sm font-semibold">{tier.tierName}</span>
                 </div>
-                {tier.isActive && <Badge className="text-[9px] bg-primary/15 text-primary border-0">ACTIVE</Badge>}
+                {tier.isActive && <Badge className="text-[9px] bg-success/15 text-success border-0">COMPLETE</Badge>}
                 {tier.inProgress && <Badge variant="secondary" className="text-[9px]">IN PROGRESS</Badge>}
                 {!tier.isActive && !tier.inProgress && <Badge variant="outline" className="text-[9px] text-muted-foreground">LOCKED</Badge>}
               </div>
@@ -89,6 +139,11 @@ export function BuffsPage() {
               </div>
               <div className="text-[10px] text-muted-foreground mb-1">
                 {formatGold(tier.currentValue)} / {formatGold(tier.targetValue)}
+                {tier.inProgress && (
+                  <span className="ml-2 text-chart-2">
+                    {formatGold(tier.targetValue - tier.currentValue)} remaining
+                  </span>
+                )}
               </div>
               <div className="flex flex-wrap gap-1">
                 {tier.effects.map((effect) => (
@@ -103,94 +158,90 @@ export function BuffsPage() {
       )}
 
       <p className="text-[10px] text-muted-foreground text-center">
-        Timers tick in real time · Mock data
+        Timers tick in real time · Matching SMMO Active Modifiers page
       </p>
     </div>
   );
 }
 
-function BuffCard({
-  buff,
+function ModifierRow({
+  mod,
+  isExpanded,
+  color,
 }: {
-  buff: {
+  mod: {
     _id: string;
-    buffName: string;
-    buffType: string;
-    expiresAt: number;
-    bonusPercent?: number;
-    iconEmoji?: string;
+    modifierType: string;
+    totalPercent: number;
+    sourceCount: number;
+    sources: Array<{
+      name: string;
+      percent: number;
+      expiresAt?: number;
+      isPermanent: boolean;
+    }>;
   };
+  isExpanded: boolean;
+  color: string;
 }) {
-  const [timeLeft, setTimeLeft] = useState(formatTimeRemaining(buff.expiresAt));
-  const isExpired = buff.expiresAt <= Date.now();
-  const remaining = buff.expiresAt - Date.now();
-  const isUrgent = !isExpired && remaining < 300000; // < 5 min
-
-  useEffect(() => {
-    if (isExpired) return;
-    const interval = setInterval(() => {
-      setTimeLeft(formatTimeRemaining(buff.expiresAt));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [buff.expiresAt, isExpired]);
-
-  const typeColor = {
-    worship: "text-chart-2",
-    sprint: "text-chart-5",
-    vault: "text-chart-3",
-    potion: "text-chart-4",
-    crafting: "text-primary",
-  }[buff.buffType] || "text-muted-foreground";
-
   return (
-    <div
-      className={`game-card ${isExpired ? "opacity-40" : ""} ${
-        isUrgent ? "border-warning/40" : ""
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <div className="text-xl shrink-0">{buff.iconEmoji || "✨"}</div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold truncate">{buff.buffName}</span>
-            <span className={`text-[9px] uppercase tracking-wider ${typeColor}`}>
-              {buff.buffType}
-            </span>
-          </div>
-          {buff.bonusPercent && (
-            <p className="text-[11px] text-success mt-0.5">+{buff.bonusPercent}% bonus</p>
-          )}
+    <div className="bg-secondary/20 rounded-lg p-2.5">
+      {/* Summary row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-medium">
+            {MODIFIER_LABELS[mod.modifierType] || mod.modifierType}
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            ×{mod.sourceCount}
+          </span>
         </div>
-        <div className="text-right shrink-0">
-          <p
-            className={`text-lg font-mono font-bold ${
-              isExpired ? "text-destructive" : isUrgent ? "text-warning" : "text-primary"
-            }`}
-          >
-            {timeLeft}
-          </p>
-          {isUrgent && !isExpired && (
-            <div className="flex items-center gap-0.5 text-[9px] text-warning justify-end">
-              <AlertTriangle className="size-2.5" />
-              Expiring soon
-            </div>
-          )}
-        </div>
+        <span className={`text-sm font-bold ${color}`}>
+          +{mod.totalPercent}%
+        </span>
       </div>
 
-      {/* Progress bar showing time remaining */}
-      {!isExpired && (
-        <div className="mt-2 h-1 rounded-full bg-muted overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${
-              isUrgent ? "bg-warning" : "bg-primary"
-            }`}
-            style={{
-              width: `${Math.min(100, (remaining / 7200000) * 100)}%`,
-            }}
-          />
+      {/* Expanded: show individual sources with timers */}
+      {isExpanded && mod.sources.length > 0 && (
+        <div className="mt-2 space-y-1.5 pl-2 border-l-2 border-muted-foreground/10">
+          {mod.sources.map((source, i) => (
+            <SourceItem key={`${mod._id}-src-${i}`} source={source} />
+          ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function SourceItem({ source }: {
+  source: { name: string; percent: number; expiresAt?: number; isPermanent: boolean };
+}) {
+  const [timeLeft, setTimeLeft] = useState(
+    source.expiresAt ? formatTimeRemaining(source.expiresAt) : ""
+  );
+  const isExpired = source.expiresAt ? source.expiresAt <= Date.now() : false;
+
+  useEffect(() => {
+    if (!source.expiresAt || isExpired || source.isPermanent) return;
+    const interval = setInterval(() => {
+      setTimeLeft(formatTimeRemaining(source.expiresAt!));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [source.expiresAt, isExpired, source.isPermanent]);
+
+  return (
+    <div className={`flex items-center justify-between text-[11px] ${isExpired ? "opacity-40" : ""}`}>
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground">{source.name}</span>
+        <span className="text-success font-medium">+{source.percent}%</span>
+      </div>
+      {source.isPermanent ? (
+        <span className="text-[10px] text-primary font-mono">∞</span>
+      ) : source.expiresAt ? (
+        <span className={`text-[10px] font-mono ${isExpired ? "text-destructive" : "text-primary"}`}>
+          {timeLeft}
+        </span>
+      ) : null}
     </div>
   );
 }

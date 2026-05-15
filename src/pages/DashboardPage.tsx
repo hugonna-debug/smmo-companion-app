@@ -12,11 +12,17 @@ import {
   ChevronRight,
   Battery,
   Landmark,
+  ShieldCheck,
+  Hammer,
+  ListChecks,
+  Zap,
+  AlertCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   formatGold,
   formatNumber,
@@ -39,6 +45,9 @@ export function DashboardPage() {
   const bosses = useQuery(api.gameData.getWorldBosses);
   const temple = useQuery(api.gameData.getTempleBoost);
   const diamondMarket = useQuery(api.gameData.getDiamondMarket);
+  const tasks = useQuery(api.gameData.getTasks);
+  const modifiers = useQuery(api.gameData.getActiveModifiers);
+  const profession = useQuery(api.gameData.getProfessionStatus);
   const seedDemo = useMutation(api.gameData.seedDemoData);
   const [seeding, setSeeding] = useState(false);
 
@@ -77,6 +86,14 @@ export function DashboardPage() {
 
   // Count low HP bosses for alert
   const lowBosses = (bosses ?? []).filter(b => (b.currentHp / b.maxHp) < 0.25);
+
+  // Task summary
+  const dailyTasks = (tasks ?? []).filter(t => t.taskType === "daily");
+  const dailyComplete = dailyTasks.filter(t => t.isCompleted).length;
+  const dailyTotal = dailyTasks.length;
+
+  // Active modifier total count
+  const modCount = (modifiers ?? []).length;
 
   return (
     <div className="p-3 md:p-4 space-y-3 max-w-4xl">
@@ -187,6 +204,43 @@ export function DashboardPage() {
         )}
       </div>
 
+      {/* Quick Status Row: Safe Mode + Tasks + Modifiers + Stat Points */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {player.safeMode && (
+          <SafeModeWidget />
+        )}
+        {dailyTotal > 0 && (
+          <Link to="/buffs" className="block">
+            <div className="game-card py-2 text-center hover:bg-secondary/40 transition-colors">
+              <ListChecks className="size-4 mx-auto text-chart-2 mb-0.5" />
+              <p className="text-sm font-bold">{dailyComplete}/{dailyTotal}</p>
+              <p className="text-[9px] text-muted-foreground">Daily Tasks</p>
+            </div>
+          </Link>
+        )}
+        {modCount > 0 && (
+          <Link to="/buffs" className="block">
+            <div className="game-card py-2 text-center hover:bg-secondary/40 transition-colors">
+              <Zap className="size-4 mx-auto text-chart-5 mb-0.5" />
+              <p className="text-sm font-bold">{modCount}</p>
+              <p className="text-[9px] text-muted-foreground">Active Mods</p>
+            </div>
+          </Link>
+        )}
+        {(player.availableStatPoints ?? 0) > 0 && (
+          <div className="game-card py-2 text-center border-warning/30">
+            <AlertCircle className="size-4 mx-auto text-warning mb-0.5" />
+            <p className="text-sm font-bold text-warning">{player.availableStatPoints}</p>
+            <p className="text-[9px] text-muted-foreground">Unspent Pts</p>
+          </div>
+        )}
+      </div>
+
+      {/* Profession Status */}
+      {profession && profession.isWorking && (
+        <ProfessionWidget profession={profession} />
+      )}
+
       {/* Currencies — 3 column like real SMMO */}
       <div className="grid grid-cols-3 gap-2">
         <StatCard icon={<Coins className="size-3.5 text-gold-accent" />} label="Gold" value={formatGold(player.gold)} />
@@ -201,9 +255,38 @@ export function DashboardPage() {
         <StatCard icon={<Skull className="size-3.5 text-muted-foreground" />} label="NPC Kills" value={formatNumber(player.npcKills)} />
       </div>
 
+      {/* Tasks Summary Widget */}
+      {tasks && tasks.length > 0 && (
+        <TasksSummaryWidget tasks={tasks} />
+      )}
+
       {/* Temple Boost (active god only) */}
       {temple && temple.expiresAt > Date.now() && (
         <TempleBoostCard temple={temple} />
+      )}
+
+      {/* Active Modifiers Summary */}
+      {modifiers && modifiers.length > 0 && (
+        <Link to="/buffs" className="block">
+          <div className="game-card hover:bg-secondary/40 transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xs font-semibold text-gold-dim uppercase tracking-wider">Active Modifiers</h2>
+              <span className="text-[10px] text-primary">View All →</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {modifiers.map((mod) => {
+                const catLabel = mod.category.charAt(0).toUpperCase() + mod.category.slice(1);
+                const typeLabel = mod.modifierType === "step_speed" ? "Speed" : mod.modifierType === "experience" ? "EXP" : mod.modifierType === "drop_rate" ? "Drop" : mod.modifierType;
+                return (
+                  <div key={mod._id} className="flex items-center justify-between p-1.5 rounded-md bg-secondary/30">
+                    <span className="text-[10px] text-muted-foreground">{catLabel} {typeLabel}</span>
+                    <span className="text-[11px] font-bold text-success">+{mod.totalPercent}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Link>
       )}
 
       {/* Combat Stats with Rankings */}
@@ -272,21 +355,6 @@ export function DashboardPage() {
             </div>
           </div>
         </Link>
-      )}
-
-      {/* Active Buffs */}
-      {buffs.length > 0 && (
-        <div className="game-card">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-gold-dim uppercase tracking-wider">Active Buffs</h2>
-            <Link to="/buffs" className="text-[10px] text-primary hover:underline">View All →</Link>
-          </div>
-          <div className="space-y-1.5">
-            {buffs.filter(b => b.expiresAt > Date.now()).slice(0, 3).map((buff) => (
-              <BuffItem key={buff._id} buff={buff} />
-            ))}
-          </div>
-        </div>
       )}
 
       {/* Diamond Market Widget */}
@@ -381,6 +449,157 @@ export function DashboardPage() {
   );
 }
 
+// ── Safe Mode Timer Widget ──
+function SafeModeWidget() {
+  const expiresAt = Date.now() + 8 * 24 * 3600000 + 8 * 3600000; // 8d 8h from now (mock)
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const update = () => {
+      const diff = expiresAt - Date.now();
+      if (diff <= 0) { setTimeLeft("Expired"); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      setTimeLeft(`${d}d ${h}h`);
+    };
+    update();
+    const interval = setInterval(update, 60000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  return (
+    <div className="game-card py-2 text-center border-success/20 bg-success/5">
+      <ShieldCheck className="size-4 mx-auto text-success mb-0.5" />
+      <p className="text-sm font-bold text-success">{timeLeft}</p>
+      <p className="text-[9px] text-muted-foreground">Safe Mode</p>
+    </div>
+  );
+}
+
+// ── Profession Widget ──
+function ProfessionWidget({ profession }: {
+  profession: {
+    professionName: string;
+    professionLevel: number;
+    isWorking: boolean;
+    finishesAt?: number;
+    expReward?: number;
+    profPointReward?: number;
+    goldReward?: number;
+  };
+}) {
+  const [timeLeft, setTimeLeft] = useState(
+    profession.finishesAt ? formatTimeRemaining(profession.finishesAt) : ""
+  );
+
+  useEffect(() => {
+    if (!profession.finishesAt) return;
+    const interval = setInterval(() => {
+      setTimeLeft(formatTimeRemaining(profession.finishesAt!));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [profession.finishesAt]);
+
+  return (
+    <div className="game-card border-chart-2/20 bg-chart-2/5">
+      <div className="flex items-center gap-3">
+        <Hammer className="size-5 text-chart-2" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold">{profession.professionName}</span>
+            <span className="text-[10px] text-muted-foreground">Lv. {profession.professionLevel}</span>
+          </div>
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+            {profession.expReward && (
+              <span className="text-xp">{formatNumber(profession.expReward)} XP</span>
+            )}
+            {profession.profPointReward && (
+              <span className="text-primary">{profession.profPointReward} pts</span>
+            )}
+            {profession.goldReward && (
+              <span className="text-gold-accent">{profession.goldReward} gold</span>
+            )}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-lg font-mono font-bold text-chart-2">{timeLeft}</p>
+          <p className="text-[9px] text-muted-foreground">Working...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Tasks Summary Widget ──
+function TasksSummaryWidget({ tasks }: { tasks: Array<{
+  taskType: string; description: string; currentAmount: number;
+  targetAmount: number; isCompleted: boolean; expReward: number;
+  otherReward?: string; refreshAt?: number;
+}> }) {
+  const [activeTab, setActiveTab] = useState<"daily" | "weekly" | "monthly">("daily");
+  const filteredTasks = tasks.filter(t => t.taskType === activeTab);
+  const completed = filteredTasks.filter(t => t.isCompleted).length;
+  const total = filteredTasks.length;
+
+  return (
+    <div className="game-card">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <ListChecks className="size-4 text-chart-2" />
+          <h2 className="text-xs font-semibold text-gold-dim uppercase tracking-wider">Tasks</h2>
+        </div>
+        <span className="text-[10px] text-muted-foreground">{completed}/{total} complete</span>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5 mb-2">
+        {(["daily", "weekly", "monthly"] as const).map(tab => {
+          const tabTasks = tasks.filter(t => t.taskType === tab);
+          const c = tabTasks.filter(t => t.isCompleted).length;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 text-[10px] font-medium py-1 rounded-md transition-all ${
+                activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)} ({c}/{tabTasks.length})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Task list */}
+      <div className="space-y-1.5">
+        {filteredTasks.map((task, i) => {
+          const pct = task.targetAmount > 0 ? Math.min(100, Math.round((task.currentAmount / task.targetAmount) * 100)) : 0;
+          return (
+            <div key={`task-${activeTab}-${i}`} className={`p-2 rounded-md ${task.isCompleted ? "bg-success/10" : "bg-secondary/20"}`}>
+              <div className="flex items-center justify-between mb-0.5">
+                <span className={`text-[11px] font-medium ${task.isCompleted ? "text-success line-through" : ""}`}>
+                  {task.description}
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  {formatNumber(task.currentAmount)}/{formatNumber(task.targetAmount)}
+                </span>
+              </div>
+              <Progress value={pct} className="h-1" />
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[9px] text-xp">{formatNumber(task.expReward)} EXP</span>
+                {task.otherReward && (
+                  <span className="text-[9px] text-gold-accent">{task.otherReward}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
@@ -450,34 +669,6 @@ function TempleBoostCard({ temple }: { temple: {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function BuffItem({ buff }: { buff: { buffName: string; buffType: string; expiresAt: number; bonusPercent?: number; iconEmoji?: string } }) {
-  const [timeLeft, setTimeLeft] = useState(formatTimeRemaining(buff.expiresAt));
-  const isExpired = buff.expiresAt <= Date.now();
-
-  useEffect(() => {
-    if (isExpired) return;
-    const interval = setInterval(() => {
-      setTimeLeft(formatTimeRemaining(buff.expiresAt));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [buff.expiresAt, isExpired]);
-
-  return (
-    <div className={`flex items-center gap-2 p-1.5 rounded-md ${isExpired ? "opacity-40" : "bg-secondary/30"}`}>
-      <span className="text-sm">{buff.iconEmoji || "✨"}</span>
-      <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-medium truncate">{buff.buffName}</p>
-        {buff.bonusPercent && (
-          <p className="text-[9px] text-success">+{buff.bonusPercent}% bonus</p>
-        )}
-      </div>
-      <span className={`text-[11px] font-mono ${isExpired ? "text-destructive" : "text-primary"}`}>
-        {timeLeft}
-      </span>
     </div>
   );
 }
