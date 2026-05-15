@@ -1,0 +1,316 @@
+import { useQuery } from "convex/react";
+import {
+  Shield,
+  Users,
+  Swords,
+
+  Target,
+  ChevronDown,
+  ChevronUp,
+  Zap,
+  Footprints,
+  Crown,
+  Star,
+} from "lucide-react";
+import { useState } from "react";
+import { api } from "../../convex/_generated/api";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { formatGold, formatNumber, getHpColor, getHpBarColor } from "@/lib/gameUtils";
+
+type GuildTab = "overview" | "members" | "sanctuary";
+
+export function GuildPage() {
+  const guild = useQuery(api.gameData.getGuildInfo);
+  const members = useQuery(api.gameData.getGuildMembers);
+  const task = useQuery(api.gameData.getGuildTask);
+  const sanctuary = useQuery(api.gameData.getGuildSanctuary);
+  const wars = useQuery(api.gameData.getGuildWars);
+  const [activeTab, setActiveTab] = useState<GuildTab>("overview");
+  const [sortBy, setSortBy] = useState<"level" | "pvpKills" | "lastActivity">("level");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  if (guild === undefined || members === undefined || task === undefined || sanctuary === undefined || wars === undefined) {
+    return <GuildSkeleton />;
+  }
+
+  if (guild === null) {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center gap-3 min-h-[50vh]">
+        <Shield className="size-10 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">No guild data available</p>
+        <p className="text-[11px] text-muted-foreground/60">Connect your API key to load guild info</p>
+      </div>
+    );
+  }
+
+  const activeWars = wars.filter((w) => !w.isBlacklisted);
+  const onlineMembers = members.filter(m => (Date.now() - m.lastActivity) < 3600000);
+  const warriors = members.filter(m => m.warrior);
+
+  const sortedMembers = [...members].sort((a, b) => {
+    const mult = sortAsc ? 1 : -1;
+    if (sortBy === "level") return (b.level - a.level) * mult;
+    if (sortBy === "pvpKills") return (b.pvpKills - a.pvpKills) * mult;
+    return (a.lastActivity - b.lastActivity) * mult;
+  });
+
+  const taskPercent = task ? Math.round((task.currentAmount / task.targetAmount) * 100) : 0;
+
+  return (
+    <div className="p-3 md:p-4 space-y-3 max-w-4xl">
+      {/* Guild Header */}
+      <div className="game-card">
+        <div className="flex items-center gap-3">
+          <div className="size-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-xl">
+            ⚜
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-gold truncate">{guild.name}</h1>
+              {guild.tag && (
+                <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+                  [{guild.tag}]
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+              <span>{guild.memberCount} members</span>
+              <span className="text-success">{onlineMembers.length} online</span>
+              {guild.eligibleForWar && (
+                <span className="text-chart-4">⚔ War eligible</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Guild Quick Stats */}
+        <div className="grid grid-cols-4 gap-2 mt-3">
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground">Season XP</p>
+            <p className="text-sm font-bold text-primary">{formatNumber(guild.currentSeasonExp)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground">Total XP</p>
+            <p className="text-sm font-bold">{formatNumber(guild.exp)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground">Active Wars</p>
+            <p className="text-sm font-bold text-chart-4">{activeWars.length}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground">Warriors</p>
+            <p className="text-sm font-bold text-warning">{warriors.length}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Guild Task Progress */}
+      {task && (
+        <div className="game-card">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <Target className="size-3.5 text-chart-3" />
+              <span className="text-xs font-semibold text-gold-dim uppercase tracking-wider">Guild Task</span>
+            </div>
+            <Badge variant="secondary" className="text-[10px]">{task.taskType}</Badge>
+          </div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex-1">
+              <Progress value={taskPercent} className="h-2" />
+            </div>
+            <span className="text-[11px] font-mono text-primary">{taskPercent}%</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <span>{formatNumber(task.currentAmount)} / {formatNumber(task.targetAmount)}</span>
+            <span className="text-xp">+{formatNumber(task.expReward)} XP · +{task.powerPointReward} PP</span>
+          </div>
+        </div>
+      )}
+
+      {/* Tab switcher */}
+      <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
+        {(["overview", "members", "sanctuary"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
+              activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            {tab === "overview" ? `Wars (${activeWars.length})` : tab === "members" ? `Members (${members.length})` : "Sanctuary"}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview Tab - Guild Wars */}
+      {activeTab === "overview" && (
+        <div className="space-y-1.5">
+          {activeWars.length === 0 ? (
+            <div className="game-card text-center py-6">
+              <Swords className="size-6 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No active guild wars</p>
+            </div>
+          ) : (
+            activeWars.map((war) => {
+              const total = war.ourScore + war.enemyScore;
+              const ourPct = total > 0 ? (war.ourScore / total) * 100 : 50;
+              const winning = war.ourScore > war.enemyScore;
+              const tied = war.ourScore === war.enemyScore;
+              return (
+                <div key={war._id} className="game-card">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-semibold truncate">{war.enemyGuildName}</span>
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                      winning ? "bg-success/15 text-success" : tied ? "bg-warning/15 text-warning" : "bg-destructive/15 text-destructive"
+                    }`}>
+                      {winning ? "Winning" : tied ? "Tied" : "Losing"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-mono">
+                    <span className="text-success">{war.ourScore}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-destructive/20 overflow-hidden">
+                      <div className="h-full rounded-full bg-success transition-all" style={{ width: `${ourPct}%` }} />
+                    </div>
+                    <span className="text-destructive">{war.enemyScore}</span>
+                  </div>
+                  {war.status && (
+                    <span className="text-[9px] text-muted-foreground mt-1 inline-block">{war.status}</span>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Members Tab */}
+      {activeTab === "members" && (
+        <div className="space-y-2">
+          {/* Sort controls */}
+          <div className="flex items-center gap-1.5 text-[10px]">
+            <span className="text-muted-foreground">Sort:</span>
+            {(["level", "pvpKills", "lastActivity"] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => { if (sortBy === key) setSortAsc(!sortAsc); else { setSortBy(key); setSortAsc(false); } }}
+                className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                  sortBy === key ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {key === "level" ? "Level" : key === "pvpKills" ? "PvP Kills" : "Activity"}
+                {sortBy === key && (sortAsc ? <ChevronUp className="size-2.5" /> : <ChevronDown className="size-2.5" />)}
+              </button>
+            ))}
+          </div>
+
+          {sortedMembers.map((member) => {
+            const hpPct = Math.round((member.currentHp / member.maxHp) * 100);
+            const isOnline = (Date.now() - member.lastActivity) < 3600000;
+            const activityAge = Date.now() - member.lastActivity;
+            const activityLabel = activityAge < 60000 ? "just now" :
+              activityAge < 3600000 ? `${Math.floor(activityAge / 60000)}m ago` :
+              activityAge < 86400000 ? `${Math.floor(activityAge / 3600000)}h ago` :
+              `${Math.floor(activityAge / 86400000)}d ago`;
+
+            return (
+              <div key={member._id} className="game-card">
+                <div className="flex items-center gap-2">
+                  <div className={`size-8 rounded-md flex items-center justify-center text-sm shrink-0 ${
+                    member.position === "Leader" ? "bg-gold-accent/15 border border-gold-accent/30" :
+                    member.position === "Officer" ? "bg-primary/15 border border-primary/30" :
+                    "bg-secondary/50 border border-border"
+                  }`}>
+                    {member.position === "Leader" ? <Crown className="size-4 text-gold-accent" /> :
+                     member.position === "Officer" ? <Star className="size-4 text-primary" /> :
+                     <Users className="size-4 text-muted-foreground" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold truncate">{member.memberName}</span>
+                      {member.warrior && <span className="text-[9px] px-1 py-0.5 rounded bg-chart-4/15 text-chart-4">⚔ WAR</span>}
+                      {member.safeMode && <span className="text-[9px] px-1 py-0.5 rounded bg-success/15 text-success">SAFE</span>}
+                      <span className={`size-1.5 rounded-full ${isOnline ? "bg-success" : "bg-muted-foreground/30"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                      <span>Lv. {member.level}</span>
+                      <span className="flex items-center gap-0.5"><Swords className="size-2.5" />{formatNumber(member.pvpKills)}</span>
+                      <span className="flex items-center gap-0.5"><Footprints className="size-2.5" />{formatNumber(member.steps)}</span>
+                      <span>{activityLabel}</span>
+                    </div>
+                    {/* HP bar */}
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                        <div className={`h-full rounded-full ${getHpBarColor(hpPct)}`} style={{ width: `${hpPct}%` }} />
+                      </div>
+                      <span className={`text-[9px] font-mono ${getHpColor(hpPct)}`}>{hpPct}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Sanctuary Tab */}
+      {activeTab === "sanctuary" && (
+        <div className="space-y-2">
+          {sanctuary.length === 0 ? (
+            <div className="game-card text-center py-6">
+              <Shield className="size-6 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No sanctuary data</p>
+            </div>
+          ) : (
+            sanctuary.map((tier) => (
+              <div key={tier._id} className={`game-card ${tier.isActive ? "border-primary/30" : ""}`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <Zap className={`size-3.5 ${tier.isActive ? "text-primary" : tier.inProgress ? "text-warning" : "text-muted-foreground"}`} />
+                    <span className="text-sm font-semibold">{tier.tierName}</span>
+                  </div>
+                  {tier.isActive && <Badge className="text-[9px] bg-primary/15 text-primary border-0">ACTIVE</Badge>}
+                  {tier.inProgress && <Badge variant="secondary" className="text-[9px]">IN PROGRESS</Badge>}
+                  {!tier.isActive && !tier.inProgress && <Badge variant="outline" className="text-[9px] text-muted-foreground">LOCKED</Badge>}
+                </div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Progress value={tier.percentage} className="h-1.5" />
+                  <span className="text-[10px] font-mono text-primary">{tier.percentage}%</span>
+                </div>
+                <div className="text-[10px] text-muted-foreground mb-1">
+                  {formatGold(tier.currentValue)} / {formatGold(tier.targetValue)}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {tier.effects.map((effect) => (
+                    <span key={effect} className="text-[9px] px-1.5 py-0.5 rounded bg-secondary/50 text-foreground/80">
+                      {effect}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      <p className="text-[10px] text-muted-foreground text-center">
+        Mock data · Guild endpoints require own-guild membership for task/sanctuary/contribution
+      </p>
+    </div>
+  );
+}
+
+function GuildSkeleton() {
+  return (
+    <div className="p-3 md:p-4 space-y-3">
+      <div className="game-card h-24 animate-pulse" />
+      <div className="game-card h-16 animate-pulse" />
+      <div className="flex gap-1 h-8 rounded-lg bg-muted animate-pulse" />
+      {[...Array(4)].map((_, i) => (
+        <div key={`gskel-${i}`} className="game-card h-16 animate-pulse" />
+      ))}
+    </div>
+  );
+}

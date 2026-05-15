@@ -1,0 +1,385 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Custom game colors */
+  --color-hp: var(--hp);
+  --color-hp-bg: var(--hp-bg);
+  --color-xp: var(--xp);
+  --color-xp-bg: var(--xp-bg);
+  --color-gold-accent: var(--gold-accent);
+  --color-gold-dim: var(--gold-dim);
+  --color-rarity-common: var(--rarity-common);
+  --color-rarity-uncommon: var(--rarity-uncommon);
+  --color-rarity-rare: var(--rarity-rare);
+  --color-rarity-elite: var(--rarity-elite);
+  --color-rarity-legendary: var(--rarity-legendary);
+  --color-rarity-celestial: var(--rarity-celestial);
+}
+
+/* Medieval Dark Theme - default for a game companion */
+:root {
+  --sidebar-width: 14rem;
+  --sidebar-width-icon: 3rem;
+
+  /* Gold-accented dark theme */
+  --primary: oklch(0.78 0.12 80);
+  --primary-foreground: oklch(0.15 0.02 60);
+  --sidebar-primary: oklch(0.78 0.12 80);
+  --sidebar-primary-foreground: oklch(0.12 0.02 60);
+
+  --success: oklch(0.65 0.18 145);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.75 0.15 65);
+  --warning-foreground: oklch(0.15 0.05 60);
+  --info: oklch(0.65 0.12 230);
+  --info-foreground: oklch(0.98 0 0);
+
+  /* Chart colors - medieval palette */
+  --chart-1: oklch(0.65 0.18 145);
+  --chart-2: oklch(0.75 0.15 65);
+  --chart-3: oklch(0.65 0.12 230);
+  --chart-4: oklch(0.6 0.2 25);
+  --chart-5: oklch(0.7 0.15 160);
+
+  --radius: 0.5rem;
+
+  /* Dark stone background */
+  --background: oklch(0.13 0.01 260);
+  --foreground: oklch(0.88 0.02 80);
+  --card: oklch(0.16 0.012 260);
+  --card-foreground: oklch(0.88 0.02 80);
+  --popover: oklch(0.18 0.012 260);
+  --popover-foreground: oklch(0.88 0.02 80);
+  --secondary: oklch(0.2 0.015 260);
+  --secondary-foreground: oklch(0.85 0.02 80);
+  --muted: oklch(0.2 0.01 260);
+  --muted-foreground: oklch(0.55 0.02 80);
+  --accent: oklch(0.22 0.02 60);
+  --accent-foreground: oklch(0.88 0.02 80);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.25 0.015 60);
+  --input: oklch(0.22 0.015 260);
+  --ring: oklch(0.78 0.12 80);
+
+  /* Sidebar - darker panel */
+  --sidebar: oklch(0.11 0.01 260);
+  --sidebar-foreground: oklch(0.85 0.02 80);
+  --sidebar-accent: oklch(0.18 0.02 60);
+  --sidebar-accent-foreground: oklch(0.88 0.02 80);
+  --sidebar-border: oklch(0.22 0.02 60);
+  --sidebar-ring: oklch(0.78 0.12 80);
+
+  /* Game-specific */
+  --hp: oklch(0.6 0.2 25);
+  --hp-bg: oklch(0.25 0.05 25);
+  --xp: oklch(0.65 0.15 270);
+  --xp-bg: oklch(0.25 0.04 270);
+  --gold-accent: oklch(0.78 0.12 80);
+  --gold-dim: oklch(0.5 0.08 80);
+  --rarity-common: oklch(0.6 0 0);
+  --rarity-uncommon: oklch(0.65 0.18 145);
+  --rarity-rare: oklch(0.6 0.2 260);
+  --rarity-elite: oklch(0.65 0.2 300);
+  --rarity-legendary: oklch(0.75 0.15 65);
+  --rarity-celestial: oklch(0.7 0.2 330);
+}
+
+.dark {
+  /* Same as root since this is a dark-first game app */
+  --primary: oklch(0.78 0.12 80);
+  --primary-foreground: oklch(0.15 0.02 60);
+  --sidebar-primary: oklch(0.78 0.12 80);
+  --sidebar-primary-foreground: oklch(0.12 0.02 60);
+
+  --success: oklch(0.65 0.18 145);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.75 0.15 65);
+  --warning-foreground: oklch(0.15 0.05 60);
+  --info: oklch(0.65 0.12 230);
+  --info-foreground: oklch(0.98 0 0);
+
+  --chart-1: oklch(0.65 0.18 145);
+  --chart-2: oklch(0.75 0.15 65);
+  --chart-3: oklch(0.65 0.12 230);
+  --chart-4: oklch(0.6 0.2 25);
+  --chart-5: oklch(0.7 0.15 160);
+
+  --background: oklch(0.13 0.01 260);
+  --foreground: oklch(0.88 0.02 80);
+  --card: oklch(0.16 0.012 260);
+  --card-foreground: oklch(0.88 0.02 80);
+  --popover: oklch(0.18 0.012 260);
+  --popover-foreground: oklch(0.88 0.02 80);
+  --secondary: oklch(0.2 0.015 260);
+  --secondary-foreground: oklch(0.85 0.02 80);
+  --muted: oklch(0.2 0.01 260);
+  --muted-foreground: oklch(0.55 0.02 80);
+  --accent: oklch(0.22 0.02 60);
+  --accent-foreground: oklch(0.88 0.02 80);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.25 0.015 60);
+  --input: oklch(0.22 0.015 260);
+  --ring: oklch(0.78 0.12 80);
+  --sidebar: oklch(0.11 0.01 260);
+  --sidebar-foreground: oklch(0.85 0.02 80);
+  --sidebar-accent: oklch(0.18 0.02 60);
+  --sidebar-accent-foreground: oklch(0.88 0.02 80);
+  --sidebar-border: oklch(0.22 0.02 60);
+  --sidebar-ring: oklch(0.78 0.12 80);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      max-width: 1280px;
+    }
+  }
+
+  /* Game stat bars */
+  .stat-bar {
+    @apply h-3 rounded-full overflow-hidden;
+    background: oklch(0.2 0.01 260);
+  }
+  .stat-bar-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+  }
+
+  /* Rarity glow effect */
+  .rarity-glow-legendary {
+    box-shadow: 0 0 8px oklch(0.75 0.15 65 / 30%);
+  }
+  .rarity-glow-celestial {
+    box-shadow: 0 0 12px oklch(0.7 0.2 330 / 35%);
+  }
+
+  /* Compact mobile layout */
+  .game-card {
+    @apply rounded-lg border bg-card p-3;
+  }
+
+  /* Gold text */
+  .text-gold {
+    color: oklch(0.78 0.12 80);
+  }
+  .text-gold-dim {
+    color: oklch(0.5 0.08 80);
+  }
+
+  /* ──────────────────────────────────────────────
+     L-Shape Layout
+     ────────────────────────────────────────────── */
+
+  .l-shape-container {
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  /* Side: tall narrow arm — primary scrollable content */
+  .l-shape-side {
+    grid-area: side;
+    overflow: hidden;
+    min-height: 0;
+    border-right: 1px solid oklch(0.25 0.01 260);
+  }
+
+  .l-shape-side-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.35 0.02 260) transparent;
+  }
+
+  /* Strip: wide short arm — secondary info */
+  .l-shape-strip {
+    grid-area: strip;
+    overflow: hidden;
+    min-height: 0;
+    border-top: 1px solid oklch(0.25 0.01 260);
+  }
+
+  .l-shape-strip-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .l-shape-strip-hint {
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  /* Dead zone — transparent for game window */
+  .l-shape-deadzone {
+    grid-area: dead;
+    background: transparent;
+    pointer-events: none;
+    border: 1px dashed oklch(0.3 0.01 260 / 30%);
+    position: relative;
+  }
+
+  .l-shape-deadzone::after {
+    content: "🎮";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    opacity: 0.15;
+  }
+
+  .l-shape-nav {
+    grid-area: nav;
+    border-top: 1px solid oklch(0.25 0.01 260);
+    background: oklch(0.14 0.005 260);
+  }
+
+  /* Bottom navigation bar */
+  .bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 52px;
+    padding: 0 4px;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: oklch(0.55 0.02 260);
+    font-size: 9px;
+    font-weight: 500;
+    min-width: 48px;
+  }
+
+  .bottom-nav-item:hover {
+    color: oklch(0.78 0.12 80);
+    background: oklch(0.78 0.12 80 / 8%);
+  }
+
+  .bottom-nav-item.active {
+    color: oklch(0.78 0.12 80);
+    background: oklch(0.78 0.12 80 / 12%);
+  }
+
+  .bottom-nav-item.active svg {
+    filter: drop-shadow(0 0 4px oklch(0.78 0.12 80 / 40%));
+  }
+
+  /* L-shape mode: compact page content */
+  .lshape-mode .game-card {
+    padding: 6px;
+  }
+
+  .lshape-mode h1 {
+    font-size: 14px !important;
+  }
+
+  .lshape-mode .stat-bar {
+    height: 8px;
+  }
+}
