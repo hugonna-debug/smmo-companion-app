@@ -48,19 +48,7 @@ export function DashboardPage() {
   const tasks = useQuery(api.gameData.getTasks);
   const modifiers = useQuery(api.gameData.getActiveModifiers);
   const profession = useQuery(api.gameData.getProfessionStatus);
-  const seedDemo = useMutation(api.gameData.seedDemoData);
-  const [seeding, setSeeding] = useState(false);
-
-  // Auto-seed demo data if none exists or if stale data or new tables missing
-  const vaultCodes = useQuery(api.gameData.getVaultCodes);
-  const isStale = player !== null && player !== undefined && player.bank === undefined;
-  const needsReseed = vaultCodes !== undefined && vaultCodes.length === 0 && player !== null && player !== undefined;
-  useEffect(() => {
-    if ((player === null || isStale || needsReseed) && !seeding) {
-      setSeeding(true);
-      seedDemo().then(() => setSeeding(false));
-    }
-  }, [player, isStale, needsReseed, seedDemo, seeding]);
+  // No auto-seed — show empty state if no data, user can seed from Settings
 
   if (player === undefined || equipment === undefined || buffs === undefined || skills === undefined) {
     return <LoadingSkeleton />;

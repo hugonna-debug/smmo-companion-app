@@ -1788,6 +1788,8 @@ export const clearUserData = mutation({
       "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
       "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
       "worldBosses", "diamondMarket", "orphanage", "appSettings",
+      "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
+      "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
     ] as const;
     for (const table of tables) {
       const docs = await ctx.db
