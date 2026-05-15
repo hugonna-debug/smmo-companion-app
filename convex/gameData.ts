@@ -606,6 +606,7 @@ export const seedDemoData = mutation({
         "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
         "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
         "worldBosses", "diamondMarket", "orphanage", "appSettings",
+        "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
       ] as const;
       for (const table of tables) {
         const docs = await ctx.db
@@ -898,6 +899,139 @@ export const seedDemoData = mutation({
       await ctx.db.insert("orphanage", { userId, ...tier });
     }
 
+    // ── Market Tracking (Watchlist items) ──
+    const marketItems = [
+      {
+        itemId: 48201, itemName: "The Stick", rarity: "legendary", type: "weapon",
+        currentLow: 450000000, currentHigh: 680000000, lastPrice: 520000000,
+        priceHistory: [
+          { price: 490000000, timestamp: now - 86400000 * 7 },
+          { price: 510000000, timestamp: now - 86400000 * 5 },
+          { price: 480000000, timestamp: now - 86400000 * 3 },
+          { price: 520000000, timestamp: now - 86400000 },
+        ],
+        circulation: 23, notes: "My main weapon — tracking for guild mates", alertBelow: 400000000,
+      },
+      {
+        itemId: 51034, itemName: "Emeris", rarity: "celestial", type: "armour",
+        currentLow: 1200000000, currentHigh: 1800000000, lastPrice: 1450000000,
+        priceHistory: [
+          { price: 1100000000, timestamp: now - 86400000 * 14 },
+          { price: 1350000000, timestamp: now - 86400000 * 7 },
+          { price: 1450000000, timestamp: now - 86400000 },
+        ],
+        circulation: 8, notes: "Best armour in game, extremely rare",
+      },
+      {
+        itemId: 39882, itemName: "Damaged Archdemon Amulet (Str)", rarity: "legendary", type: "amulet",
+        currentLow: 180000000, currentHigh: 320000000, lastPrice: 245000000,
+        priceHistory: [
+          { price: 200000000, timestamp: now - 86400000 * 10 },
+          { price: 230000000, timestamp: now - 86400000 * 5 },
+          { price: 245000000, timestamp: now - 86400000 },
+        ],
+        circulation: 47, alertBelow: 150000000,
+      },
+      {
+        itemId: 62110, itemName: "Graviton Boots", rarity: "legendary", type: "boots",
+        currentLow: 95000000, currentHigh: 150000000, lastPrice: 110000000,
+        priceHistory: [
+          { price: 120000000, timestamp: now - 86400000 * 6 },
+          { price: 105000000, timestamp: now - 86400000 * 3 },
+          { price: 110000000, timestamp: now - 86400000 },
+        ],
+        circulation: 31,
+      },
+      {
+        itemId: 77450, itemName: "Dragon King Shield", rarity: "legendary", type: "shield",
+        currentLow: 220000000, currentHigh: 380000000, lastPrice: 290000000,
+        priceHistory: [
+          { price: 310000000, timestamp: now - 86400000 * 8 },
+          { price: 275000000, timestamp: now - 86400000 * 4 },
+          { price: 290000000, timestamp: now - 86400000 },
+        ],
+        circulation: 15, notes: "Price dipping — good buy window",
+      },
+    ];
+    for (const item of marketItems) {
+      await ctx.db.insert("marketTracking", {
+        userId, itemId: item.itemId, itemName: item.itemName,
+        rarity: item.rarity, type: item.type,
+        currentLow: item.currentLow, currentHigh: item.currentHigh,
+        lastPrice: item.lastPrice, priceHistory: item.priceHistory,
+        circulation: item.circulation, notes: item.notes,
+        alertBelow: item.alertBelow,
+        addedAt: now - 86400000 * 14, lastChecked: now - 300000,
+      });
+    }
+
+    // ── Personal Items (inventory, storage, showcase, custom) ──
+    const personalItemsData = [
+      { itemId: 48201, itemName: "The Stick", category: "inventory", rarity: "legendary", quantity: 1, value: 520000000, isFavorite: true },
+      { itemId: 51034, itemName: "Emeris", category: "inventory", rarity: "celestial", quantity: 1, value: 1450000000, isFavorite: true },
+      { itemId: 39882, itemName: "Damaged Archdemon Amulet (Str)", category: "inventory", rarity: "legendary", quantity: 1, value: 245000000, isFavorite: false },
+      { itemId: 88201, itemName: "Gold Ore", category: "storage", rarity: "common", quantity: 847, value: 5000, isFavorite: false },
+      { itemId: 88305, itemName: "Diamond Ore", category: "storage", rarity: "rare", quantity: 23, value: 125000, isFavorite: false },
+      { itemId: 88450, itemName: "Celestial Fragment", category: "storage", rarity: "celestial", quantity: 3, value: 50000000, isFavorite: true },
+      { itemId: 90100, itemName: "Simpletopia Badge", category: "showcase", rarity: "legendary", quantity: 1, value: 0, isFavorite: true, notes: "Guardian of Simpletopia title proof" },
+      { itemId: 90205, itemName: "Deer Antler Trophy", category: "showcase", rarity: "elite", quantity: 1, value: 0, isFavorite: true, notes: "The Deers guild war champion" },
+      { itemId: 90310, itemName: "First Kill Medal", category: "showcase", rarity: "rare", quantity: 1, value: 0, isFavorite: false },
+      { itemName: "Mortem Avatar (Dark)", category: "avatar", rarity: "legendary", quantity: 1, isFavorite: true, notes: "Death god theme" },
+      { itemName: "Crystal Deer Avatar", category: "avatar", rarity: "elite", quantity: 1, isFavorite: false, notes: "Guild exclusive" },
+      { itemName: "Honeycomb Set (Full)", category: "custom", rarity: "rare", quantity: 4, notes: "Axe + Harpoon + Pickaxe + Shovel", isFavorite: false },
+      { itemName: "War Trophies Collection", category: "custom", rarity: "legendary", quantity: 12, notes: "Drops from guild war victories", isFavorite: true },
+    ];
+    for (const pi of personalItemsData) {
+      await ctx.db.insert("personalItems", {
+        userId,
+        itemId: pi.itemId,
+        itemName: pi.itemName,
+        category: pi.category,
+        rarity: pi.rarity,
+        quantity: pi.quantity,
+        value: pi.value,
+        notes: pi.notes,
+        acquiredAt: now - Math.floor(Math.random() * 86400000 * 30),
+        isFavorite: pi.isFavorite,
+      });
+    }
+
+    // ── PvP Assistant Queue ──
+    const pvpQueueData = [
+      { targetPlayerId: 12045, targetName: "xDarkLordx", targetLevel: 28500, targetStr: 48200, targetDef: 3200, targetDex: 5800, targetHp: 98000, targetMaxHp: 136000, targetGuildId: 2045, targetGuildName: "Touhou", targetGold: 45000, targetSafeMode: false, status: "queued", priority: 1, allyKills: 3, enemyKills: 7, attempts: 0 },
+      { targetPlayerId: 23891, targetName: "NightBlade99", targetLevel: 30100, targetStr: 55100, targetDef: 4100, targetDex: 7200, targetHp: 145000, targetMaxHp: 145000, targetGuildId: 3891, targetGuildName: "Dark Knights", targetGold: 82000, targetSafeMode: false, status: "queued", priority: 1, allyKills: 1, enemyKills: 12, attempts: 0 },
+      { targetPlayerId: 34567, targetName: "CrystalMage", targetLevel: 26800, targetStr: 41500, targetDef: 2100, targetDex: 4500, targetHp: 52000, targetMaxHp: 118000, targetGuildId: 2045, targetGuildName: "Touhou", targetGold: 21000, targetSafeMode: false, status: "queued", priority: 2, allyKills: 5, enemyKills: 2, attempts: 0 },
+      { targetPlayerId: 45678, targetName: "IronFist_VII", targetLevel: 29200, targetStr: 51300, targetDef: 3800, targetDex: 6300, targetHp: 128000, targetMaxHp: 142000, targetGuildId: 7834, targetGuildName: "Shadow Realm", targetGold: 67000, targetSafeMode: false, status: "queued", priority: 2, allyKills: 0, enemyKills: 4, attempts: 0 },
+      { targetPlayerId: 67890, targetName: "StormRider", targetLevel: 29800, targetStr: 49800, targetDef: 3600, targetDex: 6100, targetHp: 91000, targetMaxHp: 140000, targetGuildId: 3891, targetGuildName: "Dark Knights", targetGold: 54000, targetSafeMode: false, status: "queued", priority: 2, allyKills: 2, enemyKills: 8, attempts: 0 },
+      { targetPlayerId: 89012, targetName: "MoonWalker", targetLevel: 31000, targetStr: 57200, targetDef: 4500, targetDex: 7800, targetHp: 48000, targetMaxHp: 155000, targetGuildId: 7834, targetGuildName: "Shadow Realm", targetGold: 110000, targetSafeMode: false, status: "queued", priority: 1, allyKills: 0, enemyKills: 15, attempts: 0 },
+      { targetPlayerId: 56789, targetName: "QueenBee", targetLevel: 27600, targetStr: 44000, targetDef: 2800, targetDex: 5100, targetHp: 18000, targetMaxHp: 122000, targetGuildId: 9201, targetGuildName: "Cult of Cthulhu", targetGold: 9500, targetSafeMode: true, status: "skipped", priority: 3, allyKills: 0, enemyKills: 1, attempts: 1 },
+      { targetPlayerId: 78901, targetName: "PixelKnight", targetLevel: 25200, targetStr: 38700, targetDef: 1900, targetDex: 3800, targetHp: 105000, targetMaxHp: 105000, targetGuildId: 4510, targetGuildName: "Space Pirates", targetGold: 32000, targetSafeMode: false, status: "completed", priority: 3, allyKills: 6, enemyKills: 0, attempts: 2 },
+    ];
+    for (const t of pvpQueueData) {
+      await ctx.db.insert("pvpAssistantQueue", {
+        userId, ...t, addedAt: now - Math.floor(Math.random() * 3600000),
+      });
+    }
+
+    // ── PvP Blacklist ──
+    const blacklistData = [
+      { targetPlayerId: 99001, targetName: "TrollMaster420", reason: "Retaliates with alt accounts" },
+      { targetPlayerId: 99002, targetName: "AFK_Farmer", reason: "Not worth the gold — always broke" },
+    ];
+    for (const bl of blacklistData) {
+      await ctx.db.insert("pvpBlacklist", { userId, ...bl, addedAt: now - 86400000 * 5 });
+    }
+
+    // ── AI Advisor Messages (sample conversation) ──
+    const advisorMsgs = [
+      { role: "system", content: "SMMO Strategic Advisor initialized. Analyzing The Guy's profile — Lv.29,727 Warrior with 52,400 STR.", category: "general", timestamp: now - 3600000 },
+      { role: "user", content: "Should I invest more into DEX or keep pumping STR? I'm at 52.4K STR and 6.9K DEX.", category: "build", timestamp: now - 3500000 },
+      { role: "assistant", content: "With your current build (52.4K STR, Top 0.57%), you're already a top-tier damage dealer. Your DEX at 6,950 gives solid dodge chance. I'd recommend:\n\n**Short term:** Keep STR focus — you're close to top 0.5% breakpoint.\n**Medium term:** Once you hit 55K STR, start splitting 60/40 STR/DEX.\n**DEF note:** Your 5 DEF is a glass cannon build. Consider at least 500 DEF to avoid getting one-shot by high-DEX opponents.\n\nYour spATK +107% is excellent — Mortem worship + Stick combo is meta.", category: "build", timestamp: now - 3400000 },
+    ];
+    for (const msg of advisorMsgs) {
+      await ctx.db.insert("aiAdvisorMessages", { userId, ...msg });
+    }
+
     // ── Settings ──
     await ctx.db.insert("appSettings", {
       userId,
@@ -906,6 +1040,359 @@ export const seedDemoData = mutation({
       theme: "dark",
     });
 
+    return null;
+  },
+});
+
+// ── Market Tracking ──
+
+export const getMarketTracking = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("marketTracking"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      itemId: v.number(),
+      itemName: v.string(),
+      rarity: v.optional(v.string()),
+      type: v.optional(v.string()),
+      currentLow: v.optional(v.number()),
+      currentHigh: v.optional(v.number()),
+      lastPrice: v.optional(v.number()),
+      priceHistory: v.optional(v.array(v.object({ price: v.number(), timestamp: v.number() }))),
+      circulation: v.optional(v.number()),
+      notes: v.optional(v.string()),
+      alertBelow: v.optional(v.number()),
+      addedAt: v.number(),
+      lastChecked: v.number(),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db
+      .query("marketTracking")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+
+export const addMarketItem = mutation({
+  args: {
+    itemId: v.number(),
+    itemName: v.string(),
+    rarity: v.optional(v.string()),
+    type: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    alertBelow: v.optional(v.number()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const now = Date.now();
+    await ctx.db.insert("marketTracking", {
+      userId,
+      itemId: args.itemId,
+      itemName: args.itemName,
+      rarity: args.rarity,
+      type: args.type,
+      notes: args.notes,
+      alertBelow: args.alertBelow,
+      addedAt: now,
+      lastChecked: now,
+    });
+    return null;
+  },
+});
+
+export const removeMarketItem = mutation({
+  args: { trackingId: v.id("marketTracking") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const item = await ctx.db.get(args.trackingId);
+    if (!item || item.userId !== userId) return null;
+    await ctx.db.delete(args.trackingId);
+    return null;
+  },
+});
+
+export const updateMarketNotes = mutation({
+  args: { trackingId: v.id("marketTracking"), notes: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const item = await ctx.db.get(args.trackingId);
+    if (!item || item.userId !== userId) return null;
+    await ctx.db.patch(args.trackingId, { notes: args.notes });
+    return null;
+  },
+});
+
+// ── Personal Items ──
+
+export const getPersonalItems = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("personalItems"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      itemId: v.optional(v.number()),
+      itemName: v.string(),
+      category: v.string(),
+      rarity: v.optional(v.string()),
+      quantity: v.number(),
+      value: v.optional(v.number()),
+      imageUrl: v.optional(v.string()),
+      notes: v.optional(v.string()),
+      acquiredAt: v.optional(v.number()),
+      isFavorite: v.boolean(),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db
+      .query("personalItems")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+
+export const addPersonalItem = mutation({
+  args: {
+    itemId: v.optional(v.number()),
+    itemName: v.string(),
+    category: v.string(),
+    rarity: v.optional(v.string()),
+    quantity: v.number(),
+    value: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    await ctx.db.insert("personalItems", {
+      userId,
+      itemId: args.itemId,
+      itemName: args.itemName,
+      category: args.category,
+      rarity: args.rarity,
+      quantity: args.quantity,
+      value: args.value,
+      notes: args.notes,
+      acquiredAt: Date.now(),
+      isFavorite: false,
+    });
+    return null;
+  },
+});
+
+export const removePersonalItem = mutation({
+  args: { itemId: v.id("personalItems") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const item = await ctx.db.get(args.itemId);
+    if (!item || item.userId !== userId) return null;
+    await ctx.db.delete(args.itemId);
+    return null;
+  },
+});
+
+export const toggleFavoriteItem = mutation({
+  args: { itemId: v.id("personalItems") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const item = await ctx.db.get(args.itemId);
+    if (!item || item.userId !== userId) return null;
+    await ctx.db.patch(args.itemId, { isFavorite: !item.isFavorite });
+    return null;
+  },
+});
+
+// ── PvP Assistant Queue ──
+
+export const getPvpAssistantQueue = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("pvpAssistantQueue"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      targetPlayerId: v.number(),
+      targetName: v.string(),
+      targetLevel: v.number(),
+      targetStr: v.optional(v.number()),
+      targetDef: v.optional(v.number()),
+      targetDex: v.optional(v.number()),
+      targetHp: v.number(),
+      targetMaxHp: v.number(),
+      targetGuildId: v.optional(v.number()),
+      targetGuildName: v.optional(v.string()),
+      targetGold: v.number(),
+      targetSafeMode: v.boolean(),
+      status: v.string(),
+      priority: v.number(),
+      allyKills: v.optional(v.number()),
+      enemyKills: v.optional(v.number()),
+      addedAt: v.number(),
+      lastAttempt: v.optional(v.number()),
+      attempts: v.number(),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db
+      .query("pvpAssistantQueue")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+
+export const updatePvpTargetStatus = mutation({
+  args: { targetId: v.id("pvpAssistantQueue"), status: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const target = await ctx.db.get(args.targetId);
+    if (!target || target.userId !== userId) return null;
+    const update: Record<string, unknown> = { status: args.status };
+    if (args.status === "attacking") {
+      update.lastAttempt = Date.now();
+      update.attempts = target.attempts + 1;
+    }
+    await ctx.db.patch(args.targetId, update);
+    return null;
+  },
+});
+
+export const getPvpBlacklist = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("pvpBlacklist"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      targetPlayerId: v.number(),
+      targetName: v.string(),
+      reason: v.optional(v.string()),
+      addedAt: v.number(),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db
+      .query("pvpBlacklist")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+
+export const addToPvpBlacklist = mutation({
+  args: { targetId: v.id("pvpAssistantQueue"), reason: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const target = await ctx.db.get(args.targetId);
+    if (!target || target.userId !== userId) return null;
+    await ctx.db.insert("pvpBlacklist", {
+      userId,
+      targetPlayerId: target.targetPlayerId,
+      targetName: target.targetName,
+      reason: args.reason,
+      addedAt: Date.now(),
+    });
+    await ctx.db.patch(args.targetId, { status: "skipped" });
+    return null;
+  },
+});
+
+export const removeFromPvpBlacklist = mutation({
+  args: { blacklistId: v.id("pvpBlacklist") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const entry = await ctx.db.get(args.blacklistId);
+    if (!entry || entry.userId !== userId) return null;
+    await ctx.db.delete(args.blacklistId);
+    return null;
+  },
+});
+
+// ── AI Advisor ──
+
+export const getAiAdvisorMessages = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("aiAdvisorMessages"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      role: v.string(),
+      content: v.string(),
+      category: v.optional(v.string()),
+      timestamp: v.number(),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db
+      .query("aiAdvisorMessages")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+
+export const addAiAdvisorMessage = mutation({
+  args: {
+    role: v.string(),
+    content: v.string(),
+    category: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    await ctx.db.insert("aiAdvisorMessages", {
+      userId,
+      role: args.role,
+      content: args.content,
+      category: args.category,
+      timestamp: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const clearAiAdvisorMessages = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const msgs = await ctx.db
+      .query("aiAdvisorMessages")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    for (const msg of msgs) {
+      await ctx.db.delete(msg._id);
+    }
     return null;
   },
 });

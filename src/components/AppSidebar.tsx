@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { LayoutDashboard, LogOut, Settings, Swords, Timer, Shield, Users, Skull } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, Swords, Timer, Shield, Users, Skull, ShoppingCart, Package, Crosshair, Brain } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -31,10 +31,14 @@ const mainNav = [
 
 const gameNav = [
   { href: "/pvp", label: "Guild PvP", icon: Swords },
+  { href: "/pvp-assistant", label: "PvP Assistant", icon: Crosshair },
   { href: "/guild", label: "Guild Hub", icon: Users },
   { href: "/bosses", label: "World Bosses", icon: Skull },
   { href: "/buffs", label: "Buffs & Timers", icon: Timer },
   { href: "/equipment", label: "Equipment", icon: Shield },
+  { href: "/market", label: "Market Tracker", icon: ShoppingCart },
+  { href: "/items", label: "Item Tracker", icon: Package },
+  { href: "/advisor", label: "AI Advisor", icon: Brain },
 ];
 
 function NavLink({

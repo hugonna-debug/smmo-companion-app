@@ -1,11 +1,11 @@
-import { LayoutDashboard, Settings, Skull, Swords, Users } from "lucide-react";
+import { LayoutDashboard, Settings, Crosshair, Brain, MoreHorizontal } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/pvp", label: "PvP", icon: Swords },
-  { href: "/guild", label: "Guild", icon: Users },
-  { href: "/bosses", label: "Bosses", icon: Skull },
+  { href: "/pvp-assistant", label: "PvP", icon: Crosshair },
+  { href: "/market", label: "Market", icon: MoreHorizontal },
+  { href: "/advisor", label: "Advisor", icon: Brain },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

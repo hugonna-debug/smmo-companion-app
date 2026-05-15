@@ -18,6 +18,10 @@ import {
   EquipmentPage,
   GuildPage,
   WorldBossPage,
+  MarketPage,
+  PersonalItemsPage,
+  PvpAssistantPage,
+  AiAdvisorPage,
 } from "./pages";
 
 function App() {
@@ -43,6 +47,10 @@ function App() {
               <Route path="/bosses" element={<WorldBossPage />} />
               <Route path="/buffs" element={<BuffsPage />} />
               <Route path="/equipment" element={<EquipmentPage />} />
+              <Route path="/market" element={<MarketPage />} />
+              <Route path="/items" element={<PersonalItemsPage />} />
+              <Route path="/pvp-assistant" element={<PvpAssistantPage />} />
+              <Route path="/advisor" element={<AiAdvisorPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

@@ -8,3 +8,7 @@ export { EquipmentPage } from "./EquipmentPage";
 export { SettingsPage } from "./SettingsPage";
 export { GuildPage } from "./GuildPage";
 export { WorldBossPage } from "./WorldBossPage";
+export { MarketPage } from "./MarketPage";
+export { PersonalItemsPage } from "./PersonalItemsPage";
+export { PvpAssistantPage } from "./PvpAssistantPage";
+export { AiAdvisorPage } from "./AiAdvisorPage";

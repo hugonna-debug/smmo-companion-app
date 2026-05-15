@@ -296,6 +296,92 @@ const schema = defineSchema({
   })
     .index("by_userId", ["userId"]),
 
+  // Market tracked items (watchlist)
+  marketTracking: defineTable({
+    userId: v.id("users"),
+    itemId: v.number(),
+    itemName: v.string(),
+    rarity: v.optional(v.string()),
+    type: v.optional(v.string()),
+    currentLow: v.optional(v.number()),
+    currentHigh: v.optional(v.number()),
+    lastPrice: v.optional(v.number()),
+    priceHistory: v.optional(v.array(v.object({
+      price: v.number(),
+      timestamp: v.number(),
+    }))),
+    circulation: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    alertBelow: v.optional(v.number()),
+    addedAt: v.number(),
+    lastChecked: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_itemId", ["userId", "itemId"]),
+
+  // Personal item tracker (inventory, storage, showcase, custom)
+  personalItems: defineTable({
+    userId: v.id("users"),
+    itemId: v.optional(v.number()),
+    itemName: v.string(),
+    category: v.string(), // "inventory" | "storage" | "showcase" | "custom" | "avatar"
+    rarity: v.optional(v.string()),
+    quantity: v.number(),
+    value: v.optional(v.number()),
+    imageUrl: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    acquiredAt: v.optional(v.number()),
+    isFavorite: v.boolean(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_category", ["userId", "category"]),
+
+  // PvP Target Assistant (enhanced queue system)
+  pvpAssistantQueue: defineTable({
+    userId: v.id("users"),
+    targetPlayerId: v.number(),
+    targetName: v.string(),
+    targetLevel: v.number(),
+    targetStr: v.optional(v.number()),
+    targetDef: v.optional(v.number()),
+    targetDex: v.optional(v.number()),
+    targetHp: v.number(),
+    targetMaxHp: v.number(),
+    targetGuildId: v.optional(v.number()),
+    targetGuildName: v.optional(v.string()),
+    targetGold: v.number(),
+    targetSafeMode: v.boolean(),
+    status: v.string(), // "queued" | "attacking" | "completed" | "skipped" | "failed"
+    priority: v.number(), // 1=high, 2=medium, 3=low
+    allyKills: v.optional(v.number()),
+    enemyKills: v.optional(v.number()),
+    addedAt: v.number(),
+    lastAttempt: v.optional(v.number()),
+    attempts: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_status", ["userId", "status"]),
+
+  // PvP Assistant blacklist
+  pvpBlacklist: defineTable({
+    userId: v.id("users"),
+    targetPlayerId: v.number(),
+    targetName: v.string(),
+    reason: v.optional(v.string()),
+    addedAt: v.number(),
+  })
+    .index("by_userId", ["userId"]),
+
+  // AI Advisor chat history
+  aiAdvisorMessages: defineTable({
+    userId: v.id("users"),
+    role: v.string(), // "user" | "assistant" | "system"
+    content: v.string(),
+    category: v.optional(v.string()), // "build" | "market" | "war" | "general"
+    timestamp: v.number(),
+  })
+    .index("by_userId", ["userId"]),
+
   // App settings
   appSettings: defineTable({
     userId: v.id("users"),
