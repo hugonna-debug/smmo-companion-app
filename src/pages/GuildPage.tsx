@@ -3,7 +3,6 @@ import {
   Shield,
   Users,
   Swords,
-
   Target,
   ChevronDown,
   ChevronUp,
@@ -11,6 +10,9 @@ import {
   Footprints,
   Crown,
   Star,
+  Coins,
+  Skull,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
@@ -18,7 +20,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { formatGold, formatNumber, getHpColor, getHpBarColor } from "@/lib/gameUtils";
 
-type GuildTab = "overview" | "members" | "sanctuary";
+function ContribStat({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 p-2 rounded-md bg-secondary/30">
+      {icon}
+      <div>
+        <p className="text-sm font-bold">{value}</p>
+        <p className="text-[10px] text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+type GuildTab = "overview" | "members" | "sanctuary" | "contribution";
 
 export function GuildPage() {
   const guild = useQuery(api.gameData.getGuildInfo);
@@ -26,6 +40,7 @@ export function GuildPage() {
   const task = useQuery(api.gameData.getGuildTask);
   const sanctuary = useQuery(api.gameData.getGuildSanctuary);
   const wars = useQuery(api.gameData.getGuildWars);
+  const contribution = useQuery(api.gameData.getGuildContribution);
   const [activeTab, setActiveTab] = useState<GuildTab>("overview");
   const [sortBy, setSortBy] = useState<"level" | "pvpKills" | "lastActivity">("level");
   const [sortAsc, setSortAsc] = useState(false);
@@ -130,7 +145,7 @@ export function GuildPage() {
 
       {/* Tab switcher */}
       <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
-        {(["overview", "members", "sanctuary"] as const).map((tab) => (
+        {(["overview", "members", "sanctuary", "contribution"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -139,7 +154,7 @@ export function GuildPage() {
               activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
             }`}
           >
-            {tab === "overview" ? `Wars (${activeWars.length})` : tab === "members" ? `Members (${members.length})` : "Sanctuary"}
+            {tab === "overview" ? `Wars (${activeWars.length})` : tab === "members" ? `Members (${members.length})` : tab === "sanctuary" ? "Sanctuary" : "Contribution"}
           </button>
         ))}
       </div>
@@ -291,6 +306,39 @@ export function GuildPage() {
                 </div>
               </div>
             ))
+          )}
+        </div>
+      )}
+
+      {/* Contribution Tab */}
+      {activeTab === "contribution" && (
+        <div className="space-y-2">
+          {contribution === null || contribution === undefined ? (
+            <div className="game-card text-center py-6">
+              <Target className="size-6 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No contribution data</p>
+            </div>
+          ) : (
+            <>
+              <div className="game-card">
+                <h3 className="text-xs font-semibold text-gold-dim uppercase tracking-wider mb-3">Your Guild Contribution</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <ContribStat label="Gold Deposited" value={formatGold(contribution.goldDeposited)} icon={<Coins className="size-3.5 text-gold-accent" />} />
+                  <ContribStat label="Power Points" value={formatNumber(contribution.powerPointsDeposited)} icon={<Zap className="size-3.5 text-primary" />} />
+                  <ContribStat label="PvE Kills" value={formatNumber(contribution.pveKills)} icon={<Skull className="size-3.5 text-chart-3" />} />
+                  <ContribStat label="PvE EXP" value={formatNumber(contribution.pveExp)} icon={<Sparkles className="size-3.5 text-xp" />} />
+                  <ContribStat label="PvP Kills" value={formatNumber(contribution.pvpKills)} icon={<Swords className="size-3.5 text-chart-4" />} />
+                  <ContribStat label="PvP EXP" value={formatNumber(contribution.pvpExp)} icon={<Sparkles className="size-3.5 text-chart-4" />} />
+                </div>
+              </div>
+              <div className="game-card">
+                <h3 className="text-xs font-semibold text-gold-dim uppercase tracking-wider mb-3">Tax Contributions</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <ContribStat label="Guild Bank Tax" value={formatGold(contribution.taxGuildBank ?? 0)} icon={<Coins className="size-3.5 text-gold-accent" />} />
+                  <ContribStat label="Sanctuary Tax" value={formatGold(contribution.taxSanctuary ?? 0)} icon={<Shield className="size-3.5 text-chart-3" />} />
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}

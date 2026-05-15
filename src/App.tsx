@@ -22,6 +22,9 @@ import {
   PersonalItemsPage,
   PvpAssistantPage,
   AiAdvisorPage,
+  VaultPage,
+  CollectionPage,
+  WatchlistPage,
 } from "./pages";
 
 function App() {
@@ -51,6 +54,9 @@ function App() {
               <Route path="/items" element={<PersonalItemsPage />} />
               <Route path="/pvp-assistant" element={<PvpAssistantPage />} />
               <Route path="/advisor" element={<AiAdvisorPage />} />
+              <Route path="/vault" element={<VaultPage />} />
+              <Route path="/collection" element={<CollectionPage />} />
+              <Route path="/watchlist" element={<WatchlistPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

@@ -382,6 +382,58 @@ const schema = defineSchema({
   })
     .index("by_userId", ["userId"]),
 
+  // Vault codes (Simple Wolf)
+  vaultCodes: defineTable({
+    userId: v.id("users"),
+    code: v.string(),
+    source: v.string(), // "simple_wolf" | "community" | "manual"
+    reward: v.optional(v.string()),
+    rewardType: v.optional(v.string()), // "gold" | "exp" | "item" | "diamond" | "buff"
+    isRedeemed: v.boolean(),
+    expiresAt: v.optional(v.number()),
+    addedAt: v.number(),
+    redeemedAt: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  })
+    .index("by_userId", ["userId"]),
+
+  // Collection progress (avatars, showcases, achievements)
+  collectionProgress: defineTable({
+    userId: v.id("users"),
+    category: v.string(), // "avatar" | "background" | "title" | "badge" | "achievement"
+    itemName: v.string(),
+    itemId: v.optional(v.number()),
+    isOwned: v.boolean(),
+    rarity: v.optional(v.string()),
+    obtainedAt: v.optional(v.number()),
+    source: v.optional(v.string()), // "shop" | "event" | "quest" | "boss" | "craft" | "trade"
+    notes: v.optional(v.string()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_category", ["userId", "category"]),
+
+  // Player watchlist
+  playerWatchlist: defineTable({
+    userId: v.id("users"),
+    watchedPlayerId: v.number(),
+    watchedPlayerName: v.string(),
+    watchedPlayerLevel: v.number(),
+    watchedPlayerGuildName: v.optional(v.string()),
+    watchedPlayerStr: v.optional(v.number()),
+    watchedPlayerDef: v.optional(v.number()),
+    watchedPlayerDex: v.optional(v.number()),
+    watchedPlayerHp: v.optional(v.number()),
+    watchedPlayerMaxHp: v.optional(v.number()),
+    watchedPlayerGold: v.optional(v.number()),
+    watchedPlayerSafeMode: v.optional(v.boolean()),
+    watchedPlayerLastActivity: v.optional(v.number()),
+    tag: v.string(), // "friend" | "enemy" | "trader" | "guild_mate" | "other"
+    notes: v.optional(v.string()),
+    addedAt: v.number(),
+    lastChecked: v.number(),
+  })
+    .index("by_userId", ["userId"]),
+
   // App settings
   appSettings: defineTable({
     userId: v.id("users"),

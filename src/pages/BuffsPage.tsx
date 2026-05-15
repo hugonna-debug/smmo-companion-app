@@ -1,11 +1,14 @@
 import { useQuery } from "convex/react";
-import { Timer, AlertTriangle } from "lucide-react";
+import { Timer, AlertTriangle, Home, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { formatTimeRemaining } from "@/lib/gameUtils";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { formatGold, formatTimeRemaining } from "@/lib/gameUtils";
 
 export function BuffsPage() {
   const buffs = useQuery(api.gameData.getBuffs);
+  const orphanage = useQuery(api.gameData.getOrphanage);
 
   if (buffs === undefined) {
     return (
@@ -58,6 +61,45 @@ export function BuffsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Orphanage Section */}
+      {orphanage && orphanage.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <Home className="size-3.5 text-chart-2" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+              Orphanage Tiers
+            </p>
+          </div>
+          {orphanage.map((tier) => (
+            <div key={tier._id} className={`game-card ${tier.inProgress ? "border-chart-2/20" : ""}`}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Zap className={`size-3.5 ${tier.isActive ? "text-primary" : tier.inProgress ? "text-chart-2" : "text-muted-foreground"}`} />
+                  <span className="text-sm font-semibold">{tier.tierName}</span>
+                </div>
+                {tier.isActive && <Badge className="text-[9px] bg-primary/15 text-primary border-0">ACTIVE</Badge>}
+                {tier.inProgress && <Badge variant="secondary" className="text-[9px]">IN PROGRESS</Badge>}
+                {!tier.isActive && !tier.inProgress && <Badge variant="outline" className="text-[9px] text-muted-foreground">LOCKED</Badge>}
+              </div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Progress value={tier.percentage} className="h-1.5" />
+                <span className="text-[10px] font-mono text-primary">{tier.percentage}%</span>
+              </div>
+              <div className="text-[10px] text-muted-foreground mb-1">
+                {formatGold(tier.currentValue)} / {formatGold(tier.targetValue)}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {tier.effects.map((effect) => (
+                  <span key={effect} className="text-[9px] px-1.5 py-0.5 rounded bg-secondary/50 text-foreground/80">
+                    {effect}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       <p className="text-[10px] text-muted-foreground text-center">

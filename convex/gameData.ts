@@ -597,8 +597,12 @@ export const seedDemoData = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
     if (existing) {
-      // If has all new fields including bank, skip
-      if (existing.bank !== undefined && existing.spAtkDamage !== undefined) {
+      // Check if new tables are seeded
+      const hasVault = await ctx.db.query("vaultCodes").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
+      const hasCollection = await ctx.db.query("collectionProgress").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
+      const hasWatchlist = await ctx.db.query("playerWatchlist").withIndex("by_userId", (q) => q.eq("userId", userId)).first();
+      // If has all fields and all new tables, skip
+      if (existing.bank !== undefined && existing.spAtkDamage !== undefined && hasVault && hasCollection && hasWatchlist) {
         return null;
       }
       // Stale data — clear everything and re-seed below
@@ -607,6 +611,7 @@ export const seedDemoData = mutation({
         "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
         "worldBosses", "diamondMarket", "orphanage", "appSettings",
         "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
+        "vaultCodes", "collectionProgress", "playerWatchlist",
       ] as const;
       for (const table of tables) {
         const docs = await ctx.db
@@ -1032,6 +1037,70 @@ export const seedDemoData = mutation({
       await ctx.db.insert("aiAdvisorMessages", { userId, ...msg });
     }
 
+    // ── Vault Codes (Simple Wolf sourced) ──
+    const vaultCodesData = [
+      { code: "SIMPLEWOLF2026", source: "simple_wolf", reward: "500,000 Gold", rewardType: "gold", isRedeemed: true, addedAt: now - 86400000 * 20, redeemedAt: now - 86400000 * 19, notes: "Monthly code from Simple Wolf" },
+      { code: "DEERPOWER", source: "simple_wolf", reward: "+10% STR Buff (2h)", rewardType: "buff", isRedeemed: true, addedAt: now - 86400000 * 14, redeemedAt: now - 86400000 * 13 },
+      { code: "MORTEMRISES", source: "simple_wolf", reward: "5 Diamonds", rewardType: "diamond", isRedeemed: false, addedAt: now - 86400000 * 3, expiresAt: now + 86400000 * 4, notes: "Expires soon!" },
+      { code: "TREASUREHUNT50", source: "community", reward: "Rare Treasure Map", rewardType: "item", isRedeemed: false, addedAt: now - 86400000 * 1 },
+      { code: "SPRING2026EVENT", source: "simple_wolf", reward: "Spring Event Box", rewardType: "item", isRedeemed: false, addedAt: now - 3600000, expiresAt: now + 86400000 * 7, notes: "Limited time spring event" },
+      { code: "GUILDWAR500", source: "community", reward: "500,000 Gold", rewardType: "gold", isRedeemed: true, addedAt: now - 86400000 * 30, redeemedAt: now - 86400000 * 29 },
+      { code: "NEWADVENTURE", source: "simple_wolf", reward: "1,000,000 EXP", rewardType: "exp", isRedeemed: false, addedAt: now - 86400000 * 2, expiresAt: now + 86400000 * 5 },
+    ];
+    for (const vc of vaultCodesData) {
+      await ctx.db.insert("vaultCodes", { userId, ...vc });
+    }
+
+    // ── Collection Progress ──
+    const collectionData = [
+      // Avatars
+      { category: "avatar", itemName: "Default Avatar", isOwned: true, rarity: "common", source: "quest", obtainedAt: now - 86400000 * 300 },
+      { category: "avatar", itemName: "Mortem Avatar (Dark)", isOwned: true, rarity: "legendary", source: "boss", obtainedAt: now - 86400000 * 45, notes: "Death god theme" },
+      { category: "avatar", itemName: "Crystal Deer Avatar", isOwned: true, rarity: "elite", source: "event", obtainedAt: now - 86400000 * 60, notes: "Guild exclusive" },
+      { category: "avatar", itemName: "Golden Warrior Avatar", isOwned: true, rarity: "legendary", source: "shop", obtainedAt: now - 86400000 * 90 },
+      { category: "avatar", itemName: "Celestial Knight Avatar", isOwned: false, rarity: "celestial", source: "boss", notes: "Drops from The Leviathan" },
+      { category: "avatar", itemName: "Shadow Assassin Avatar", isOwned: false, rarity: "legendary", source: "craft" },
+      { category: "avatar", itemName: "Spring Bloom Avatar", isOwned: true, rarity: "rare", source: "event", obtainedAt: now - 86400000 * 15 },
+      { category: "avatar", itemName: "Fire Lord Avatar", isOwned: false, rarity: "legendary", source: "boss", notes: "Frost Wyrm drop" },
+      { category: "avatar", itemName: "Pixel Art Avatar", isOwned: true, rarity: "common", source: "shop", obtainedAt: now - 86400000 * 120 },
+      { category: "avatar", itemName: "Anniversary 2025 Avatar", isOwned: true, rarity: "elite", source: "event", obtainedAt: now - 86400000 * 200 },
+      // Backgrounds
+      { category: "background", itemName: "Simpletopia Sunset", isOwned: true, rarity: "rare", source: "quest", obtainedAt: now - 86400000 * 150 },
+      { category: "background", itemName: "Dark Forest", isOwned: true, rarity: "elite", source: "shop", obtainedAt: now - 86400000 * 100 },
+      { category: "background", itemName: "Celestial Void", isOwned: false, rarity: "celestial", source: "boss" },
+      { category: "background", itemName: "Guild War Arena", isOwned: true, rarity: "legendary", source: "event", obtainedAt: now - 86400000 * 30 },
+      { category: "background", itemName: "Ocean Depths", isOwned: false, rarity: "rare", source: "quest" },
+      // Titles
+      { category: "title", itemName: "Guardian of Simpletopia", isOwned: true, rarity: "legendary", source: "quest", obtainedAt: now - 86400000 * 80, notes: "Current title" },
+      { category: "title", itemName: "War Veteran", isOwned: true, rarity: "elite", source: "event", obtainedAt: now - 86400000 * 40 },
+      { category: "title", itemName: "Dragon Slayer", isOwned: false, rarity: "legendary", source: "boss" },
+      { category: "title", itemName: "Market Mogul", isOwned: false, rarity: "elite", source: "trade", notes: "Need 50K market trades" },
+      { category: "title", itemName: "The Unstoppable", isOwned: false, rarity: "celestial", source: "quest", notes: "100K PvP kills required" },
+      // Badges
+      { category: "badge", itemName: "First Blood", isOwned: true, rarity: "common", source: "quest", obtainedAt: now - 86400000 * 280 },
+      { category: "badge", itemName: "10K PvP Kills", isOwned: true, rarity: "rare", source: "quest", obtainedAt: now - 86400000 * 100 },
+      { category: "badge", itemName: "25K PvP Kills", isOwned: true, rarity: "elite", source: "quest", obtainedAt: now - 86400000 * 20 },
+      { category: "badge", itemName: "50K PvP Kills", isOwned: false, rarity: "legendary", source: "quest", notes: "29,427 / 50,000" },
+      { category: "badge", itemName: "Boss Hunter", isOwned: true, rarity: "rare", source: "boss", obtainedAt: now - 86400000 * 50 },
+      { category: "badge", itemName: "Guild Champion", isOwned: true, rarity: "legendary", source: "event", obtainedAt: now - 86400000 * 10 },
+    ];
+    for (const c of collectionData) {
+      await ctx.db.insert("collectionProgress", { userId, ...c });
+    }
+
+    // ── Player Watchlist ──
+    const watchlistData = [
+      { watchedPlayerId: 112045, watchedPlayerName: "DeerKing", watchedPlayerLevel: 31200, watchedPlayerGuildName: "The Deers", watchedPlayerStr: 58900, watchedPlayerDef: 4200, watchedPlayerDex: 7500, watchedPlayerHp: 210000, watchedPlayerMaxHp: 210000, watchedPlayerGold: 250000, watchedPlayerSafeMode: false, watchedPlayerLastActivity: now - 300000, tag: "friend", notes: "Guild leader — coordinate war targets", addedAt: now - 86400000 * 60, lastChecked: now - 600000 },
+      { watchedPlayerId: 456789, watchedPlayerName: "MoonlitBlade", watchedPlayerLevel: 30500, watchedPlayerGuildName: "The Deers", watchedPlayerStr: 54200, watchedPlayerDef: 3900, watchedPlayerDex: 6800, watchedPlayerHp: 45000, watchedPlayerMaxHp: 168000, watchedPlayerGold: 89000, watchedPlayerSafeMode: false, watchedPlayerLastActivity: now - 900000, tag: "friend", notes: "Low HP — might need backup in war", addedAt: now - 86400000 * 30, lastChecked: now - 1800000 },
+      { watchedPlayerId: 23891, watchedPlayerName: "NightBlade99", watchedPlayerLevel: 30100, watchedPlayerGuildName: "Dark Knights", watchedPlayerStr: 55100, watchedPlayerDef: 4100, watchedPlayerDex: 7200, watchedPlayerHp: 145000, watchedPlayerMaxHp: 145000, watchedPlayerGold: 82000, watchedPlayerSafeMode: false, watchedPlayerLastActivity: now - 7200000, tag: "enemy", notes: "Top DK player — focus in wars", addedAt: now - 86400000 * 14, lastChecked: now - 3600000 },
+      { watchedPlayerId: 89012, watchedPlayerName: "MoonWalker", watchedPlayerLevel: 31000, watchedPlayerGuildName: "Shadow Realm", watchedPlayerStr: 57200, watchedPlayerDef: 4500, watchedPlayerDex: 7800, watchedPlayerHp: 48000, watchedPlayerMaxHp: 155000, watchedPlayerGold: 110000, watchedPlayerSafeMode: false, watchedPlayerLastActivity: now - 14400000, tag: "enemy", notes: "High STR but low HP — easy target when weakened", addedAt: now - 86400000 * 7, lastChecked: now - 7200000 },
+      { watchedPlayerId: 510234, watchedPlayerName: "DiamondDealer", watchedPlayerLevel: 22100, watchedPlayerGuildName: undefined, watchedPlayerStr: 28500, watchedPlayerDef: 1800, watchedPlayerDex: 3200, watchedPlayerHp: 95000, watchedPlayerMaxHp: 95000, watchedPlayerGold: 5000000, watchedPlayerSafeMode: true, watchedPlayerLastActivity: now - 43200000, tag: "trader", notes: "Best diamond prices — check daily", addedAt: now - 86400000 * 10, lastChecked: now - 43200000 },
+      { watchedPlayerId: 67890, watchedPlayerName: "StormRider", watchedPlayerLevel: 29800, watchedPlayerGuildName: "Dark Knights", watchedPlayerStr: 49800, watchedPlayerDef: 3600, watchedPlayerDex: 6100, watchedPlayerHp: 91000, watchedPlayerMaxHp: 140000, watchedPlayerGold: 54000, watchedPlayerSafeMode: false, watchedPlayerLastActivity: now - 5400000, tag: "enemy", notes: "Second most kills on DK side", addedAt: now - 86400000 * 14, lastChecked: now - 5400000 },
+    ];
+    for (const w of watchlistData) {
+      await ctx.db.insert("playerWatchlist", { userId, ...w });
+    }
+
     // ── Settings ──
     await ctx.db.insert("appSettings", {
       userId,
@@ -1398,6 +1467,166 @@ export const clearAiAdvisorMessages = mutation({
 });
 
 // Clear all data for a user (useful for re-seeding)
+// ── Vault Codes ──
+
+export const getVaultCodes = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("vaultCodes"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      code: v.string(),
+      source: v.string(),
+      reward: v.optional(v.string()),
+      rewardType: v.optional(v.string()),
+      isRedeemed: v.boolean(),
+      expiresAt: v.optional(v.number()),
+      addedAt: v.number(),
+      redeemedAt: v.optional(v.number()),
+      notes: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db.query("vaultCodes").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+  },
+});
+
+export const addVaultCode = mutation({
+  args: { code: v.string(), source: v.string(), reward: v.optional(v.string()), rewardType: v.optional(v.string()), expiresAt: v.optional(v.number()), notes: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    await ctx.db.insert("vaultCodes", { userId, ...args, isRedeemed: false, addedAt: Date.now() });
+    return null;
+  },
+});
+
+export const toggleVaultRedeemed = mutation({
+  args: { codeId: v.id("vaultCodes") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const code = await ctx.db.get(args.codeId);
+    if (!code || code.userId !== userId) return null;
+    await ctx.db.patch(args.codeId, { isRedeemed: !code.isRedeemed, redeemedAt: !code.isRedeemed ? Date.now() : undefined });
+    return null;
+  },
+});
+
+export const removeVaultCode = mutation({
+  args: { codeId: v.id("vaultCodes") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const code = await ctx.db.get(args.codeId);
+    if (code && code.userId === userId) await ctx.db.delete(args.codeId);
+    return null;
+  },
+});
+
+// ── Collection Progress ──
+
+export const getCollectionProgress = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("collectionProgress"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      category: v.string(),
+      itemName: v.string(),
+      itemId: v.optional(v.number()),
+      isOwned: v.boolean(),
+      rarity: v.optional(v.string()),
+      obtainedAt: v.optional(v.number()),
+      source: v.optional(v.string()),
+      notes: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db.query("collectionProgress").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+  },
+});
+
+export const toggleCollectionOwned = mutation({
+  args: { itemId: v.id("collectionProgress") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const item = await ctx.db.get(args.itemId);
+    if (!item || item.userId !== userId) return null;
+    await ctx.db.patch(args.itemId, { isOwned: !item.isOwned, obtainedAt: !item.isOwned ? Date.now() : undefined });
+    return null;
+  },
+});
+
+// ── Player Watchlist ──
+
+export const getPlayerWatchlist = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("playerWatchlist"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      watchedPlayerId: v.number(),
+      watchedPlayerName: v.string(),
+      watchedPlayerLevel: v.number(),
+      watchedPlayerGuildName: v.optional(v.string()),
+      watchedPlayerStr: v.optional(v.number()),
+      watchedPlayerDef: v.optional(v.number()),
+      watchedPlayerDex: v.optional(v.number()),
+      watchedPlayerHp: v.optional(v.number()),
+      watchedPlayerMaxHp: v.optional(v.number()),
+      watchedPlayerGold: v.optional(v.number()),
+      watchedPlayerSafeMode: v.optional(v.boolean()),
+      watchedPlayerLastActivity: v.optional(v.number()),
+      tag: v.string(),
+      notes: v.optional(v.string()),
+      addedAt: v.number(),
+      lastChecked: v.number(),
+    })
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db.query("playerWatchlist").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+  },
+});
+
+export const removeWatchlistPlayer = mutation({
+  args: { entryId: v.id("playerWatchlist") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const entry = await ctx.db.get(args.entryId);
+    if (entry && entry.userId === userId) await ctx.db.delete(args.entryId);
+    return null;
+  },
+});
+
+export const updateWatchlistNotes = mutation({
+  args: { entryId: v.id("playerWatchlist"), notes: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const entry = await ctx.db.get(args.entryId);
+    if (entry && entry.userId === userId) await ctx.db.patch(args.entryId, { notes: args.notes });
+    return null;
+  },
+});
+
 export const clearUserData = mutation({
   args: {},
   returns: v.null(),

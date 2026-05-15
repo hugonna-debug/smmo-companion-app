@@ -12,3 +12,6 @@ export { MarketPage } from "./MarketPage";
 export { PersonalItemsPage } from "./PersonalItemsPage";
 export { PvpAssistantPage } from "./PvpAssistantPage";
 export { AiAdvisorPage } from "./AiAdvisorPage";
+export { VaultPage } from "./VaultPage";
+export { CollectionPage } from "./CollectionPage";
+export { WatchlistPage } from "./WatchlistPage";

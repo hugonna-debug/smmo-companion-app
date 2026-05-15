@@ -38,17 +38,20 @@ export function DashboardPage() {
   const skills = useQuery(api.gameData.getPlayerSkills);
   const bosses = useQuery(api.gameData.getWorldBosses);
   const temple = useQuery(api.gameData.getTempleBoost);
+  const diamondMarket = useQuery(api.gameData.getDiamondMarket);
   const seedDemo = useMutation(api.gameData.seedDemoData);
   const [seeding, setSeeding] = useState(false);
 
-  // Auto-seed demo data if none exists or if stale data
+  // Auto-seed demo data if none exists or if stale data or new tables missing
+  const vaultCodes = useQuery(api.gameData.getVaultCodes);
   const isStale = player !== null && player !== undefined && player.bank === undefined;
+  const needsReseed = vaultCodes !== undefined && vaultCodes.length === 0 && player !== null && player !== undefined;
   useEffect(() => {
-    if ((player === null || isStale) && !seeding) {
+    if ((player === null || isStale || needsReseed) && !seeding) {
       setSeeding(true);
       seedDemo().then(() => setSeeding(false));
     }
-  }, [player, isStale, seedDemo, seeding]);
+  }, [player, isStale, needsReseed, seedDemo, seeding]);
 
   if (player === undefined || equipment === undefined || buffs === undefined || skills === undefined) {
     return <LoadingSkeleton />;
@@ -282,6 +285,35 @@ export function DashboardPage() {
             {buffs.filter(b => b.expiresAt > Date.now()).slice(0, 3).map((buff) => (
               <BuffItem key={buff._id} buff={buff} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Diamond Market Widget */}
+      {diamondMarket && diamondMarket.length > 0 && (
+        <div className="game-card">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-gold-dim uppercase tracking-wider">💎 Diamond Market</h2>
+            <span className="text-[10px] text-muted-foreground">{diamondMarket.length} listings</span>
+          </div>
+          <div className="space-y-1.5">
+            {diamondMarket.slice(0, 3).map((d) => {
+              const pricePerDiamond = d.pricePerDiamond || 0;
+              return (
+                <div key={d._id} className="flex items-center justify-between p-1.5 rounded-md bg-secondary/30">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium truncate">{d.sellerName}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {d.diamondsRemaining}/{d.diamondAmount} 💎 remaining
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-[11px] font-bold text-gold-accent">{formatGold(pricePerDiamond)}</p>
+                    <p className="text-[9px] text-muted-foreground">per 💎</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
