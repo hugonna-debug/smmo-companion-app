@@ -6,6 +6,7 @@ import { internal } from "./_generated/api";
 import {
   buildItemDisplayName,
   itemStatBonuses,
+  isSmmoNotFoundError,
   mergeRateMeta,
   normalizeEquipmentSlot,
   smmoFetchJson,
@@ -499,7 +500,8 @@ export const syncAll = action({
             defBonus: bonuses.defBonus,
             level: n(item.level),
           });
-        } catch {
+        } catch (e) {
+          if (!isSmmoNotFoundError(e)) throw e;
           equipment.push({
             slot,
             itemId,

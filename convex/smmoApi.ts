@@ -57,6 +57,11 @@ export async function smmoFetchJson<T = unknown>(apiKey: string, path: string): 
   return { json, rate };
 }
 
+/** True when `smmoFetchJson` failed with HTTP 404 (e.g. deleted item). */
+export function isSmmoNotFoundError(e: unknown): boolean {
+  return e instanceof Error && /^SMMO API HTTP 404:/.test(e.message);
+}
+
 function slugSlot(raw: string): string {
   return raw
     .trim()
