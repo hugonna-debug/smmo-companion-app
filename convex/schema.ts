@@ -477,6 +477,21 @@ const schema = defineSchema({
   })
     .index("by_userId", ["userId"]),
 
+  // SMMO API credentials (server-side only; never expose smmoApiKey to clients)
+  apiKeys: defineTable({
+    userId: v.id("users"),
+    smmoApiKey: v.string(),
+    smmoPlayerId: v.number(),
+    lastValidated: v.number(),
+    lastSyncAt: v.optional(v.number()),
+    lastSyncError: v.optional(v.string()),
+    /** Sliding window of successful outbound request timestamps (ms) for local 40/min guard */
+    smmoRequestLog: v.optional(v.array(v.number())),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitLimit: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"]),
+
   // App settings
   appSettings: defineTable({
     userId: v.id("users"),
