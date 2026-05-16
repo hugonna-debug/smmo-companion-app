@@ -498,6 +498,7 @@ export const getSettings = query({
       _creationTime: v.number(),
       userId: v.id("users"),
       guildId: v.optional(v.number()),
+      apiKey: v.optional(v.string()),
       autoRefreshInterval: v.number(),
       notificationsEnabled: v.boolean(),
       theme: v.string(),
@@ -597,6 +598,14 @@ export const clearSmmoCredentials = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
     if (row) await ctx.db.delete(row._id);
+
+    const settings = await ctx.db
+      .query("appSettings")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (settings?.apiKey !== undefined) {
+      await ctx.db.patch(settings._id, { apiKey: undefined });
+    }
     return null;
   },
 });

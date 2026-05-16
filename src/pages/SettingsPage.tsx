@@ -1,7 +1,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { ChevronRight, Key, Layout, Loader2, Monitor, Settings, Smartphone, User, RefreshCw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -211,15 +211,28 @@ export function SettingsPage() {
   const [syncing, setSyncing] = useState(false);
   const [clearingSmmo, setClearingSmmo] = useState(false);
 
+  useEffect(() => {
+    if (smmoStatus?.configured && smmoStatus.smmoPlayerId !== undefined && smmoPlayerId === "") {
+      setSmmoPlayerId(String(smmoStatus.smmoPlayerId));
+    }
+  }, [smmoStatus?.configured, smmoStatus?.smmoPlayerId, smmoPlayerId]);
+
+  const resolvePlayerId = (): number | undefined => {
+    const raw = smmoPlayerId.trim();
+    const parsed = raw ? Number(raw) : smmoStatus?.smmoPlayerId;
+    if (parsed === undefined || !Number.isInteger(parsed) || parsed <= 0) return undefined;
+    return parsed;
+  };
+
   const handleValidateAndSave = async () => {
     const key = smmoApiKey.trim();
-    const pid = Number(smmoPlayerId.trim());
+    const pid = resolvePlayerId();
     if (!key) {
       toast.error("Enter your SMMO API key.");
       return;
     }
-    if (!Number.isFinite(pid) || pid <= 0) {
-      toast.error("Enter a valid numeric SMMO player ID.");
+    if (pid === undefined) {
+      toast.error("Enter a valid integer SMMO player ID.");
       return;
     }
     setValidating(true);
