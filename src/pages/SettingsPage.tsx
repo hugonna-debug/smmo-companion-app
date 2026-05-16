@@ -1,5 +1,5 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { ChevronRight, Key, Layout, Loader2, Monitor, Settings, Smartphone, User, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -189,10 +189,12 @@ function LayoutSettings() {
 
 export function SettingsPage() {
   const user = useQuery(api.auth.currentUser);
-  const settings = useQuery(api.gameData.getSettings);
-  const updateSettings = useMutation(api.gameData.updateSettings);
+  const smmoStatus = useQuery(api.gameData.getSmmoIntegrationStatus);
   const clearData = useMutation(api.gameData.clearUserData);
   const seedDemo = useMutation(api.gameData.seedDemoData);
+  const clearSmmoCredentials = useMutation(api.gameData.clearSmmoCredentials);
+  const validateAndSave = useAction(api.syncPlayer.validateAndSaveCredentials);
+  const syncAll = useAction(api.syncPlayer.syncAll);
   const { signIn, signOut } = useAuthActions();
   const deleteAccount = useMutation(api.users.deleteAccount);
   const navigate = useNavigate();
@@ -203,18 +205,61 @@ export function SettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [passwordStep, setPasswordStep] = useState<"request" | "verify">("request");
-  const [apiKey, setApiKey] = useState("");
-  const [savingKey, setSavingKey] = useState(false);
+  const [smmoApiKey, setSmmoApiKey] = useState("");
+  const [smmoPlayerId, setSmmoPlayerId] = useState("");
+  const [validating, setValidating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [clearingSmmo, setClearingSmmo] = useState(false);
 
-  const handleSaveApiKey = async () => {
-    setSavingKey(true);
+  const handleValidateAndSave = async () => {
+    const key = smmoApiKey.trim();
+    const pid = Number(smmoPlayerId.trim());
+    if (!key) {
+      toast.error("Enter your SMMO API key.");
+      return;
+    }
+    if (!Number.isFinite(pid) || pid <= 0) {
+      toast.error("Enter a valid numeric SMMO player ID.");
+      return;
+    }
+    setValidating(true);
     try {
-      await updateSettings({ apiKey: apiKey || undefined });
-      toast.success("API key saved");
-    } catch {
-      toast.error("Failed to save API key");
+      const res = await validateAndSave({ smmoApiKey: key, smmoPlayerId: pid });
+      toast.success(`Saved. Verified as ${res.playerName}.`);
+      setSmmoApiKey("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Validation failed.");
     } finally {
-      setSavingKey(false);
+      setValidating(false);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      const res = await syncAll({});
+      const rem =
+        res.rateLimitRemaining !== undefined && res.rateLimitLimit !== undefined
+          ? `${res.rateLimitRemaining} / ${res.rateLimitLimit} requests remaining`
+          : undefined;
+      toast.success(rem ? `Sync complete. ${rem}.` : "Sync complete.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleClearSmmo = async () => {
+    setClearingSmmo(true);
+    try {
+      await clearSmmoCredentials();
+      setSmmoPlayerId("");
+      toast.success("SMMO credentials removed.");
+    } catch {
+      toast.error("Could not clear credentials.");
+    } finally {
+      setClearingSmmo(false);
     }
   };
 
@@ -308,17 +353,17 @@ export function SettingsPage() {
       {/* Layout Settings - NEW */}
       <LayoutSettings />
 
-      {/* API Key */}
+      {/* SMMO API (server-side only — key never sent back to the browser) */}
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm">
             <Key className="size-4 text-primary" />
-            SMMO API Key
+            SimpleMMO API
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-[11px] text-muted-foreground">
-            Get your API key from{" "}
+            Your API key is stored only in Convex and used from the server. Get a key from{" "}
             <a
               href="https://web.simple-mmo.com/p-api/home"
               target="_blank"
@@ -327,27 +372,103 @@ export function SettingsPage() {
             >
               web.simple-mmo.com/p-api/home
             </a>
+            .
           </p>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={settings?.apiKey ? "••••••••••" : "Enter API key"}
-              className="flex-1 h-8 text-xs bg-input"
-            />
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="smmo-api-key" className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                API key
+              </Label>
+              <Input
+                id="smmo-api-key"
+                type="password"
+                value={smmoApiKey}
+                onChange={(e) => setSmmoApiKey(e.target.value)}
+                placeholder={smmoStatus?.configured ? "Enter new key to replace" : "Paste API key"}
+                className="h-8 text-xs bg-input"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="smmo-player-id" className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                Player ID
+              </Label>
+              <Input
+                id="smmo-player-id"
+                type="text"
+                inputMode="numeric"
+                value={smmoPlayerId}
+                onChange={(e) => setSmmoPlayerId(e.target.value)}
+                placeholder={
+                  smmoStatus?.configured && smmoStatus.smmoPlayerId !== undefined
+                    ? String(smmoStatus.smmoPlayerId)
+                    : "Your SMMO user ID"
+                }
+                className="h-8 text-xs bg-input"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
               className="h-8 text-xs bg-primary text-primary-foreground"
-              onClick={handleSaveApiKey}
-              disabled={savingKey}
+              onClick={handleValidateAndSave}
+              disabled={validating}
             >
-              {savingKey ? <Loader2 className="size-3 animate-spin" /> : "Save"}
+              {validating ? <Loader2 className="size-3 animate-spin" /> : "Validate & Save"}
             </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-8 text-xs"
+              onClick={handleSyncNow}
+              disabled={syncing || !smmoStatus?.configured}
+            >
+              {syncing ? <Loader2 className="size-3 animate-spin" /> : "Sync Now"}
+            </Button>
+            {smmoStatus?.configured && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={handleClearSmmo}
+                disabled={clearingSmmo}
+              >
+                {clearingSmmo ? <Loader2 className="size-3 animate-spin" /> : "Remove key"}
+              </Button>
+            )}
           </div>
-          {settings?.apiKey && (
-            <p className="text-[10px] text-success">✓ API key configured</p>
-          )}
+          <div className="rounded-md border border-border bg-muted/30 px-2.5 py-2 space-y-1 text-[10px] text-muted-foreground">
+            <p>
+              <span className="font-medium text-foreground">Status:</span>{" "}
+              {smmoStatus?.configured ? "Connected" : "Not configured (demo data)"}
+            </p>
+            {smmoStatus?.configured && smmoStatus.lastValidated !== undefined && (
+              <p>
+                <span className="font-medium text-foreground">Last validated:</span>{" "}
+                {new Date(smmoStatus.lastValidated).toLocaleString()}
+              </p>
+            )}
+            {smmoStatus?.configured && smmoStatus.lastSyncAt !== undefined && (
+              <p>
+                <span className="font-medium text-foreground">Last sync:</span>{" "}
+                {new Date(smmoStatus.lastSyncAt).toLocaleString()}
+              </p>
+            )}
+            {smmoStatus?.configured &&
+              smmoStatus.rateLimitRemaining !== undefined &&
+              smmoStatus.rateLimitLimit !== undefined && (
+                <p>
+                  <span className="font-medium text-foreground">API rate limit:</span>{" "}
+                  {smmoStatus.rateLimitRemaining} / {smmoStatus.rateLimitLimit} remaining (per minute, from SMMO
+                  headers)
+                </p>
+              )}
+            {smmoStatus?.configured && smmoStatus.lastSyncError && (
+              <p className="text-destructive">{smmoStatus.lastSyncError}</p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

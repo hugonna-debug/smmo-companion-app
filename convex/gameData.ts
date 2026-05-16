@@ -497,7 +497,6 @@ export const getSettings = query({
       _id: v.id("appSettings"),
       _creationTime: v.number(),
       userId: v.id("users"),
-      apiKey: v.optional(v.string()),
       guildId: v.optional(v.number()),
       autoRefreshInterval: v.number(),
       notificationsEnabled: v.boolean(),
@@ -515,9 +514,46 @@ export const getSettings = query({
   },
 });
 
+/** Non-secret SMMO link status for Settings UI (API key stays server-side only). */
+export const getSmmoIntegrationStatus = query({
+  args: {},
+  returns: v.object({
+    configured: v.boolean(),
+    smmoPlayerId: v.optional(v.number()),
+    lastValidated: v.optional(v.number()),
+    lastSyncAt: v.optional(v.number()),
+    lastSyncError: v.optional(v.string()),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitLimit: v.optional(v.number()),
+  }),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return {
+        configured: false,
+      };
+    }
+    const row = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!row) {
+      return { configured: false };
+    }
+    return {
+      configured: true,
+      smmoPlayerId: row.smmoPlayerId,
+      lastValidated: row.lastValidated,
+      lastSyncAt: row.lastSyncAt,
+      lastSyncError: row.lastSyncError,
+      rateLimitRemaining: row.rateLimitRemaining,
+      rateLimitLimit: row.rateLimitLimit,
+    };
+  },
+});
+
 export const updateSettings = mutation({
   args: {
-    apiKey: v.optional(v.string()),
     guildId: v.optional(v.number()),
     autoRefreshInterval: v.optional(v.number()),
     notificationsEnabled: v.optional(v.boolean()),
@@ -532,7 +568,6 @@ export const updateSettings = mutation({
       .unique();
     if (existing) {
       const update: Record<string, unknown> = {};
-      if (args.apiKey !== undefined) update.apiKey = args.apiKey;
       if (args.guildId !== undefined) update.guildId = args.guildId;
       if (args.autoRefreshInterval !== undefined) update.autoRefreshInterval = args.autoRefreshInterval;
       if (args.notificationsEnabled !== undefined) update.notificationsEnabled = args.notificationsEnabled;
@@ -540,13 +575,28 @@ export const updateSettings = mutation({
     } else {
       await ctx.db.insert("appSettings", {
         userId,
-        apiKey: args.apiKey,
         guildId: args.guildId,
         autoRefreshInterval: args.autoRefreshInterval ?? 60,
         notificationsEnabled: args.notificationsEnabled ?? true,
         theme: "dark",
       });
     }
+    return null;
+  },
+});
+
+/** Removes stored SMMO credentials so the app falls back to seeded/mock data behavior. */
+export const clearSmmoCredentials = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const row = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (row) await ctx.db.delete(row._id);
     return null;
   },
 });
@@ -613,7 +663,7 @@ export const seedDemoData = mutation({
       const tables = [
         "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
         "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
-        "worldBosses", "diamondMarket", "orphanage", "appSettings",
+        "worldBosses", "diamondMarket", "orphanage", "appSettings", "apiKeys",
         "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
         "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
       ] as const;
@@ -1787,7 +1837,7 @@ export const clearUserData = mutation({
     const tables = [
       "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
       "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
-      "worldBosses", "diamondMarket", "orphanage", "appSettings",
+      "worldBosses", "diamondMarket", "orphanage", "appSettings", "apiKeys",
       "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
       "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
     ] as const;
