@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
@@ -547,6 +547,189 @@ export const updateSettings = mutation({
         theme: "dark",
       });
     }
+    return null;
+  },
+});
+
+export const getApiKeyStatus = query({
+  args: {},
+  returns: v.object({
+    hasApiKey: v.boolean(),
+    smmoPlayerId: v.optional(v.number()),
+    lastValidated: v.optional(v.number()),
+    rateLimitLimit: v.optional(v.number()),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitResetAt: v.optional(v.number()),
+    lastSyncAt: v.optional(v.number()),
+  }),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return { hasApiKey: false };
+    }
+    const apiKeyDoc = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!apiKeyDoc) {
+      return { hasApiKey: false };
+    }
+
+    return {
+      hasApiKey: true,
+      smmoPlayerId: apiKeyDoc.smmoPlayerId,
+      lastValidated: apiKeyDoc.lastValidated,
+      rateLimitLimit: apiKeyDoc.rateLimitLimit,
+      rateLimitRemaining: apiKeyDoc.rateLimitRemaining,
+      rateLimitResetAt: apiKeyDoc.rateLimitResetAt,
+      lastSyncAt: apiKeyDoc.lastSyncAt,
+    };
+  },
+});
+
+export const saveApiKeyConfig = mutation({
+  args: {
+    smmoApiKey: v.string(),
+    smmoPlayerId: v.number(),
+    lastValidated: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        smmoApiKey: args.smmoApiKey,
+        smmoPlayerId: args.smmoPlayerId,
+        lastValidated: args.lastValidated,
+      });
+    } else {
+      await ctx.db.insert("apiKeys", {
+        userId,
+        smmoApiKey: args.smmoApiKey,
+        smmoPlayerId: args.smmoPlayerId,
+        lastValidated: args.lastValidated,
+      });
+    }
+
+    // Legacy cleanup: avoid storing the SMMO key in appSettings.
+    const settings = await ctx.db
+      .query("appSettings")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (settings?.apiKey) {
+      await ctx.db.patch(settings._id, { apiKey: undefined });
+    }
+
+    return null;
+  },
+});
+
+export const getApiKeyForSync = internalQuery({
+  args: { userId: v.id("users") },
+  returns: v.union(
+    v.object({
+      apiKeyId: v.id("apiKeys"),
+      smmoApiKey: v.string(),
+      smmoPlayerId: v.number(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const apiKeyDoc = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (!apiKeyDoc) return null;
+    return {
+      apiKeyId: apiKeyDoc._id,
+      smmoApiKey: apiKeyDoc.smmoApiKey,
+      smmoPlayerId: apiKeyDoc.smmoPlayerId,
+    };
+  },
+});
+
+export const upsertApiKeyInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    smmoApiKey: v.string(),
+    smmoPlayerId: v.number(),
+    lastValidated: v.number(),
+    rateLimitLimit: v.optional(v.number()),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitResetAt: v.optional(v.number()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        smmoApiKey: args.smmoApiKey,
+        smmoPlayerId: args.smmoPlayerId,
+        lastValidated: args.lastValidated,
+        rateLimitLimit: args.rateLimitLimit,
+        rateLimitRemaining: args.rateLimitRemaining,
+        rateLimitResetAt: args.rateLimitResetAt,
+      });
+    } else {
+      await ctx.db.insert("apiKeys", {
+        userId: args.userId,
+        smmoApiKey: args.smmoApiKey,
+        smmoPlayerId: args.smmoPlayerId,
+        lastValidated: args.lastValidated,
+        rateLimitLimit: args.rateLimitLimit,
+        rateLimitRemaining: args.rateLimitRemaining,
+        rateLimitResetAt: args.rateLimitResetAt,
+      });
+    }
+
+    const settings = await ctx.db
+      .query("appSettings")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (settings?.apiKey) {
+      await ctx.db.patch(settings._id, { apiKey: undefined });
+    }
+
+    return null;
+  },
+});
+
+export const updateApiKeyRateLimitInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    rateLimitLimit: v.optional(v.number()),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitResetAt: v.optional(v.number()),
+    lastSyncAt: v.optional(v.number()),
+    lastValidated: v.optional(v.number()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (!existing) return null;
+
+    await ctx.db.patch(existing._id, {
+      rateLimitLimit: args.rateLimitLimit,
+      rateLimitRemaining: args.rateLimitRemaining,
+      rateLimitResetAt: args.rateLimitResetAt,
+      lastSyncAt: args.lastSyncAt,
+      lastValidated: args.lastValidated ?? existing.lastValidated,
+    });
     return null;
   },
 });
