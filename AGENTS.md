@@ -55,6 +55,21 @@ The `convex/_generated/` directory is **not committed** to git. It must be gener
 
 Convex is a cloud-only serverless backend — there is no local database or server to run. All backend functions, auth, and data live in Convex's cloud. Running `bun run sync` pushes function code to the cloud deployment.
 
+### Startup Sequence
+
+1. Write `.env.local` with `CONVEX_DEPLOY_KEY` and `VITE_CONVEX_URL` (from environment secrets)
+2. `bun run sync` — generates `convex/_generated/` and pushes functions
+3. `bun run dev` — starts Vite dev server on port 5173
+4. For preview/test login, start with `VITE_IS_PREVIEW=true bun run dev`
+
+### Test User Login
+
+To enable the "Continue as Test User" button on the login page, set `VITE_IS_PREVIEW=true` when starting the dev server. The Convex deployment also needs `VIKTOR_SPACES_IS_PREVIEW=true` (already set on the dev deployment). Test user credentials are in `scripts/testUser.ts`.
+
 ### Pre-existing Lint Issues
 
 `bun run check` reports ~52 formatting issues and 1 lint error (label without `htmlFor`). These are pre-existing in the codebase, not introduced by setup.
+
+### Network Note
+
+The Cloud Agent VM may experience transient TLS connectivity issues to non-GitHub HTTPS endpoints (including `*.convex.dev` and `*.convex.cloud`). If `bun run sync` or Convex CLI commands hang/fail, retry after a few minutes. The `convex/_generated/` files persist after a successful sync, so builds will continue to work offline.
