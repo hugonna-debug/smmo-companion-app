@@ -3,20 +3,20 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action, internalMutation } from "./_generated/server";
 import {
-  transformEquipmentItem,
-  transformPlayerData,
-  transformPlayerSkills,
+  fetchSmmoApi,
+  getSmmoErrorMessage,
+  getSmmoRateLimitStatus,
+} from "./smmoApi";
+import {
   type EquipmentPatch,
   type SmmoItemInfo,
   type SmmoSkill,
   type SmmoV1PlayerInfo,
   type SmmoV2PlayerInfo,
+  transformEquipmentItem,
+  transformPlayerData,
+  transformPlayerSkills,
 } from "./smmoTransforms";
-import {
-  fetchSmmoApi,
-  getSmmoErrorMessage,
-  getSmmoRateLimitStatus,
-} from "./smmoApi";
 
 const rateLimitValidator = v.object({
   limit: v.number(),
@@ -35,6 +35,73 @@ const syncResultValidator = v.object({
   rateLimit: rateLimitValidator,
 });
 
+const playerDataPatchValidator = v.object({
+  playerId: v.optional(v.number()),
+  playerName: v.string(),
+  level: v.number(),
+  hp: v.number(),
+  maxHp: v.number(),
+  exp: v.number(),
+  expToNextLevel: v.number(),
+  gold: v.number(),
+  diamonds: v.optional(v.number()),
+  steps: v.number(),
+  npcKills: v.number(),
+  pvpKills: v.number(),
+  pvpDeaths: v.number(),
+  questsComplete: v.number(),
+  tasksCompleted: v.optional(v.number()),
+  bossKills: v.optional(v.number()),
+  marketTrades: v.optional(v.number()),
+  reputation: v.optional(v.number()),
+  bountiesCompleted: v.optional(v.number()),
+  dailiesUnlocked: v.optional(v.number()),
+  chestsOpened: v.optional(v.number()),
+  guildId: v.optional(v.number()),
+  guildName: v.optional(v.string()),
+  safeMode: v.boolean(),
+  energy: v.optional(v.number()),
+  maxEnergy: v.optional(v.number()),
+  questPoints: v.optional(v.number()),
+  maxQuestPoints: v.optional(v.number()),
+  availableStatPoints: v.optional(v.number()),
+  membership: v.optional(v.number()),
+  coreStr: v.optional(v.number()),
+  coreDef: v.optional(v.number()),
+  coreDex: v.optional(v.number()),
+  equipStr: v.optional(v.number()),
+  equipDef: v.optional(v.number()),
+  equipDex: v.optional(v.number()),
+  bonusStr: v.optional(v.number()),
+  bonusDef: v.optional(v.number()),
+  bonusDex: v.optional(v.number()),
+  totalStr: v.optional(v.number()),
+  totalDef: v.optional(v.number()),
+  totalDex: v.optional(v.number()),
+  locationId: v.optional(v.number()),
+  locationName: v.optional(v.string()),
+  lastUpdated: v.number(),
+});
+
+const playerSkillPatchValidator = v.object({
+  skill: v.string(),
+  level: v.number(),
+  exp: v.number(),
+});
+
+const equipmentPatchValidator = v.object({
+  slot: v.string(),
+  itemId: v.optional(v.number()),
+  itemName: v.optional(v.string()),
+  rarity: v.optional(v.string()),
+  attack: v.optional(v.number()),
+  defense: v.optional(v.number()),
+  critPercent: v.optional(v.number()),
+  strBonus: v.optional(v.number()),
+  defBonus: v.optional(v.number()),
+  level: v.optional(v.number()),
+});
+
 function missingApiKeyResult() {
   return {
     success: false,
@@ -47,7 +114,9 @@ function equipmentEntries(data: Record<string, string>): [string, string][] {
   if (!data || typeof data !== "object" || Array.isArray(data)) return [];
   return Object.entries(data).filter((entry): entry is [string, string] => {
     const [itemId, slot] = entry;
-    return itemId.trim() !== "" && typeof slot === "string" && slot.trim() !== "";
+    return (
+      itemId.trim() !== "" && typeof slot === "string" && slot.trim() !== ""
+    );
   });
 }
 
@@ -75,7 +144,7 @@ async function fetchEquipment(
 export const syncPlayerData = action({
   args: {},
   returns: syncResultValidator,
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       return {
@@ -132,7 +201,7 @@ export const syncPlayerData = action({
 export const syncPlayerSkills = action({
   args: {},
   returns: syncResultValidator,
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       return {
@@ -184,7 +253,7 @@ export const syncPlayerSkills = action({
 export const syncEquipment = action({
   args: {},
   returns: syncResultValidator,
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       return {
@@ -235,7 +304,7 @@ export const syncEquipment = action({
 export const syncAll = action({
   args: {},
   returns: syncResultValidator,
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       return {
@@ -270,23 +339,18 @@ export const syncAll = action({
       );
 
       const syncedAt = Date.now();
-      const playerData = transformPlayerData(v1Player.data, v2Player.data, syncedAt);
+      const playerData = transformPlayerData(
+        v1Player.data,
+        v2Player.data,
+        syncedAt,
+      );
       const skills = transformPlayerSkills(skillsResponse.data);
 
-      await ctx.runMutation(internal.syncPlayer.upsertPlayerDataInternal, {
+      await ctx.runMutation(internal.syncPlayer.replaceAllPlayerDataInternal, {
         userId,
-        data: playerData,
-      });
-      await ctx.runMutation(internal.syncPlayer.replacePlayerSkillsInternal, {
-        userId,
+        playerData,
         skills,
-      });
-      await ctx.runMutation(internal.syncPlayer.replaceEquipmentInternal, {
-        userId,
         equipment,
-      });
-      await ctx.runMutation(internal.gameData.touchSmmoApiKeyInternal, {
-        userId,
         lastValidated: syncedAt,
       });
 
@@ -312,7 +376,7 @@ export const syncAll = action({
 export const upsertPlayerDataInternal = internalMutation({
   args: {
     userId: v.id("users"),
-    data: v.any(),
+    data: playerDataPatchValidator,
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -322,7 +386,10 @@ export const upsertPlayerDataInternal = internalMutation({
       .unique();
 
     if (existing) {
-      await ctx.db.patch(existing._id, args.data);
+      await ctx.db.replace(existing._id, {
+        userId: args.userId,
+        ...args.data,
+      });
       return null;
     }
 
@@ -337,7 +404,7 @@ export const upsertPlayerDataInternal = internalMutation({
 export const replacePlayerSkillsInternal = internalMutation({
   args: {
     userId: v.id("users"),
-    skills: v.array(v.any()),
+    skills: v.array(playerSkillPatchValidator),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -361,7 +428,7 @@ export const replacePlayerSkillsInternal = internalMutation({
 export const replaceEquipmentInternal = internalMutation({
   args: {
     userId: v.id("users"),
-    equipment: v.array(v.any()),
+    equipment: v.array(equipmentPatchValidator),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -378,6 +445,74 @@ export const replaceEquipmentInternal = internalMutation({
         ...equipment,
       });
     }
+    return null;
+  },
+});
+
+export const replaceAllPlayerDataInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    playerData: playerDataPatchValidator,
+    skills: v.array(playerSkillPatchValidator),
+    equipment: v.array(equipmentPatchValidator),
+    lastValidated: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existingPlayer = await ctx.db
+      .query("playerData")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .unique();
+    if (existingPlayer) {
+      await ctx.db.replace(existingPlayer._id, {
+        userId: args.userId,
+        ...args.playerData,
+      });
+    } else {
+      await ctx.db.insert("playerData", {
+        userId: args.userId,
+        ...args.playerData,
+      });
+    }
+
+    const existingSkills = await ctx.db
+      .query("playerSkills")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .collect();
+    for (const skill of existingSkills) {
+      await ctx.db.delete(skill._id);
+    }
+    for (const skill of args.skills) {
+      await ctx.db.insert("playerSkills", {
+        userId: args.userId,
+        ...skill,
+      });
+    }
+
+    const existingEquipment = await ctx.db
+      .query("equipment")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .collect();
+    for (const equipment of existingEquipment) {
+      await ctx.db.delete(equipment._id);
+    }
+    for (const equipment of args.equipment) {
+      await ctx.db.insert("equipment", {
+        userId: args.userId,
+        ...equipment,
+      });
+    }
+
+    const apiKey = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .unique();
+    if (apiKey) {
+      await ctx.db.patch(apiKey._id, {
+        lastValidated: args.lastValidated,
+      });
+    }
+
     return null;
   },
 });

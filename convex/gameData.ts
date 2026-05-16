@@ -575,17 +575,20 @@ export const getApiKeyStatus = query({
       .query("apiKeys")
       .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
+    if (!apiKey) return { hasApiKey: false };
+
     const player = await ctx.db
       .query("playerData")
       .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
+    const playerMatchesKey = player?.playerId === apiKey.smmoPlayerId;
 
     return {
-      hasApiKey: apiKey !== null,
-      smmoPlayerId: apiKey?.smmoPlayerId,
-      lastValidated: apiKey?.lastValidated,
-      lastSync: player?.lastUpdated,
-      playerName: player?.playerName,
+      hasApiKey: true,
+      smmoPlayerId: apiKey.smmoPlayerId,
+      lastValidated: apiKey.lastValidated,
+      lastSync: playerMatchesKey ? player.lastUpdated : undefined,
+      playerName: playerMatchesKey ? player.playerName : undefined,
     };
   },
 });
@@ -724,7 +727,7 @@ export const seedDemoData = mutation({
       const tables = [
         "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
         "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
-        "worldBosses", "diamondMarket", "orphanage", "appSettings", "apiKeys",
+        "worldBosses", "diamondMarket", "orphanage", "appSettings",
         "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
         "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
       ] as const;
@@ -1898,7 +1901,7 @@ export const clearUserData = mutation({
     const tables = [
       "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
       "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
-      "worldBosses", "diamondMarket", "orphanage", "appSettings", "apiKeys",
+      "worldBosses", "diamondMarket", "orphanage", "appSettings",
       "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
       "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
     ] as const;

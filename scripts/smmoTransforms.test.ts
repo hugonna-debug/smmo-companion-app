@@ -145,4 +145,65 @@ describe("SMMO API transforms", () => {
       level: 15,
     });
   });
+
+  test("falls back to v1 fields and coerces numeric strings", () => {
+    const data = transformPlayerData(
+      {
+        id: "456",
+        name: "Fallback Hero",
+        level: "8",
+        hp: "7",
+        max_hp: "10",
+        exp: "1234",
+        exp_to_next_level: "2000",
+        gold: "99",
+        steps: "12",
+        npc_kills: "3",
+        user_kills: "4",
+        pvp_deaths: "5",
+        quests_complete: "6",
+        safeMode: "true",
+      },
+      {},
+      1_700_000_000_100,
+    );
+
+    expect(data).toMatchObject({
+      playerId: 456,
+      playerName: "Fallback Hero",
+      level: 8,
+      hp: 7,
+      maxHp: 10,
+      exp: 1234,
+      expToNextLevel: 2000,
+      gold: 99,
+      pvpDeaths: 5,
+      safeMode: true,
+      lastUpdated: 1_700_000_000_100,
+    });
+  });
+
+  test("filters unnamed skills and falls back to item_name", () => {
+    expect(
+      transformPlayerSkills([
+        { skill: "", level: 99, exp: 999 },
+        { skill: "mining", level: "12", exp: "345" },
+      ]),
+    ).toEqual([{ skill: "mining", level: 12, exp: 345 }]);
+
+    expect(
+      transformEquipmentItem(10, "Shield", {
+        id: 10,
+        item_name: "Guard Wall",
+        rarity: "elite",
+        stat1: "armour",
+        stat1modifier: "44",
+      }),
+    ).toMatchObject({
+      slot: "shield",
+      itemName: "Guard Wall",
+      rarity: "elite",
+      defense: 44,
+    });
+  });
 });

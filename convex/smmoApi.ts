@@ -7,6 +7,7 @@ import type { SmmoV1PlayerInfo, SmmoV2PlayerInfo } from "./smmoTransforms";
 const SMMO_API_BASE_URL = "https://api.simple-mmo.com";
 const RATE_LIMIT_MAX_REQUESTS = 40;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+const REQUEST_TIMEOUT_MS = 15_000;
 
 const requestTimestamps: number[] = [];
 let lastHeaderLimit = RATE_LIMIT_MAX_REQUESTS;
@@ -88,8 +89,11 @@ async function waitForRateLimitSlot() {
 }
 
 function updateRateLimitFromHeaders(headers: Headers) {
-  const limit = Number(headers.get("x-ratelimit-limit"));
-  const remaining = Number(headers.get("x-ratelimit-remaining"));
+  const limitHeader = headers.get("x-ratelimit-limit");
+  const remainingHeader = headers.get("x-ratelimit-remaining");
+  const limit = limitHeader === null ? Number.NaN : Number(limitHeader);
+  const remaining =
+    remainingHeader === null ? Number.NaN : Number(remainingHeader);
 
   if (Number.isFinite(limit)) lastHeaderLimit = limit;
   if (Number.isFinite(remaining)) lastHeaderRemaining = remaining;
@@ -108,9 +112,7 @@ function readNumber(value: unknown): number | undefined {
 }
 
 function readString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() !== ""
-    ? value
-    : undefined;
+  return typeof value === "string" && value.trim() !== "" ? value : undefined;
 }
 
 function errorMessageFromPayload(payload: unknown): string | undefined {
@@ -129,27 +131,57 @@ export function getSmmoErrorMessage(error: unknown): string {
   return "Unable to reach the SMMO API";
 }
 
+function parseJsonPayload(text: string): unknown {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
 export async function fetchSmmoApi<T>(
   apiKey: string,
   path: string,
 ): Promise<{ data: T; rateLimit: SmmoRateLimitStatus }> {
   await waitForRateLimitSlot();
 
-  const response = await fetch(`${SMMO_API_BASE_URL}${path}`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      "api-key": apiKey,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${SMMO_API_BASE_URL}${path}`, {
+      method: "GET",
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "api-key": apiKey,
+      },
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new SmmoApiError("SMMO API request timed out", 408);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
   updateRateLimitFromHeaders(response.headers);
 
   const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
+  const payload = parseJsonPayload(text);
 
   if (!response.ok) {
     const message = errorMessageFromPayload(payload) ?? response.statusText;
-    throw new SmmoApiError(`SMMO API ${response.status}: ${message}`, response.status);
+    throw new SmmoApiError(
+      `SMMO API ${response.status}: ${message}`,
+      response.status,
+    );
+  }
+
+  if (payload === undefined) {
+    throw new SmmoApiError("SMMO API returned invalid JSON", response.status);
   }
 
   return {
@@ -161,7 +193,11 @@ export async function fetchSmmoApi<T>(
 export const getRateLimitStatus = action({
   args: {},
   returns: rateLimitValidator,
-  handler: async () => getSmmoRateLimitStatus(),
+  handler: async ctx => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    return getSmmoRateLimitStatus();
+  },
 });
 
 export const validateAndSaveApiKey = action({
@@ -194,16 +230,22 @@ export const validateAndSaveApiKey = action({
         apiKey,
         "/v2/player/info",
       );
-      const requestedPlayer = await fetchSmmoApi<SmmoV1PlayerInfo>(
-        apiKey,
-        `/v1/player/info/${args.playerId}`,
-      );
       const authenticatedPlayerId = readNumber(yourInfo.data.id);
 
       if (
-        authenticatedPlayerId !== undefined &&
-        authenticatedPlayerId !== args.playerId
+        authenticatedPlayerId === undefined ||
+        !Number.isInteger(authenticatedPlayerId) ||
+        authenticatedPlayerId <= 0
       ) {
+        return {
+          success: false,
+          message:
+            "The SMMO API did not return a valid player ID for this key.",
+          rateLimit: getSmmoRateLimitStatus(),
+        };
+      }
+
+      if (authenticatedPlayerId !== args.playerId) {
         return {
           success: false,
           message: `This API key belongs to player ${authenticatedPlayerId}, not ${args.playerId}.`,
@@ -211,6 +253,10 @@ export const validateAndSaveApiKey = action({
           rateLimit: getSmmoRateLimitStatus(),
         };
       }
+      const requestedPlayer = await fetchSmmoApi<SmmoV1PlayerInfo>(
+        apiKey,
+        `/v1/player/info/${args.playerId}`,
+      );
 
       const lastValidated = Date.now();
       await ctx.runMutation(internal.gameData.saveSmmoApiKeyInternal, {
