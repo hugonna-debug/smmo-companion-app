@@ -46,20 +46,22 @@ function buildMergedPlayerDoc(
     bonus?: { fixed?: { str?: number; def?: number; dex?: number } };
     total?: { str?: number; def?: number; dex?: number };
   };
+  const v1Any = v1 as Record<string, unknown> | null;
 
   const safe =
     typeof v2?.safe_mode === "boolean"
       ? v2.safe_mode
-      : typeof v1?.safeMode === "boolean"
-        ? v1.safeMode
-        : n(v1?.safeMode) !== 0;
+      : typeof v1Any?.safe_mode === "boolean"
+        ? v1Any.safe_mode
+        : typeof v1Any?.safeMode === "boolean"
+          ? v1Any.safeMode
+          : n(v1Any?.safe_mode ?? v1Any?.safeMode) !== 0;
 
   const level = n(v2?.level, n(v1?.level));
   const name =
     (typeof v2?.name === "string" && v2.name ? v2.name : null) ??
     (typeof v1?.name === "string" ? v1.name : "Player");
   const exp = n(v1?.exp);
-  const v1Any = v1 as Record<string, unknown> | null;
   const expTo =
     n(v1Any?.exp_to_next_level) ||
     n(v1Any?.next_level_exp) ||
@@ -167,7 +169,12 @@ export const internalGetApiKeysRow = internalQuery({
       _id: v.id("apiKeys"),
       smmoApiKey: v.string(),
       smmoPlayerId: v.number(),
+      lastValidated: v.number(),
+      lastSyncAt: v.optional(v.number()),
+      lastSyncError: v.optional(v.string()),
       smmoRequestLog: v.optional(v.array(v.number())),
+      rateLimitRemaining: v.optional(v.number()),
+      rateLimitLimit: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, { userId }) => {
@@ -180,7 +187,7 @@ export const internalGetApiKeysRow = internalQuery({
 
 export const internalReserveSmmoRequest = internalMutation({
   args: { userId: v.id("users") },
-  returns: v.null(),
+  returns: v.union(v.null(), v.number()),
   handler: async (ctx, { userId }) => {
     const row = await ctx.db
       .query("apiKeys")
@@ -195,6 +202,21 @@ export const internalReserveSmmoRequest = internalMutation({
       );
     }
     await ctx.db.patch(row._id, { smmoRequestLog: [...log, now] });
+    return now;
+  },
+});
+
+export const internalReleaseSmmoRequest = internalMutation({
+  args: { userId: v.id("users"), reservedAt: v.number() },
+  returns: v.null(),
+  handler: async (ctx, { userId, reservedAt }) => {
+    const row = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!row) return null;
+    const log = (row.smmoRequestLog ?? []).filter((t) => t !== reservedAt);
+    await ctx.db.patch(row._id, { smmoRequestLog: log });
     return null;
   },
 });
@@ -313,15 +335,14 @@ export const internalApplyPlayerSync = internalMutation({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
     if (existing) {
-      await ctx.db.patch(existing._id, playerPatch);
-    } else {
-      await ctx.db.insert(
-        "playerData",
-        { userId, ...(playerPatch as Record<string, unknown>) } as Parameters<
-          typeof ctx.db.insert<"playerData">
-        >[1],
-      );
+      await ctx.db.delete(existing._id);
     }
+    await ctx.db.insert(
+      "playerData",
+      { userId, ...(playerPatch as Record<string, unknown>) } as Parameters<
+        typeof ctx.db.insert<"playerData">
+      >[1],
+    );
 
     const oldSkills = await ctx.db
       .query("playerSkills")
@@ -359,14 +380,26 @@ async function smmoCall(
   apiKey: string,
   path: string,
 ): Promise<{ json: unknown; rate: SmmoRateMeta }> {
-  await ctx.runMutation(internal.syncPlayer.internalReserveSmmoRequest, { userId });
-  const { json, rate } = await smmoFetchJson(apiKey, path);
-  await ctx.runMutation(internal.syncPlayer.internalPatchApiKeyRateMeta, {
+  const reservedAt = await ctx.runMutation(internal.syncPlayer.internalReserveSmmoRequest, {
     userId,
-    rateLimitRemaining: rate.remaining,
-    rateLimitLimit: rate.limit,
   });
-  return { json, rate };
+  try {
+    const { json, rate } = await smmoFetchJson(apiKey, path);
+    await ctx.runMutation(internal.syncPlayer.internalPatchApiKeyRateMeta, {
+      userId,
+      rateLimitRemaining: rate.remaining,
+      rateLimitLimit: rate.limit,
+    });
+    return { json, rate };
+  } catch (e) {
+    if (reservedAt !== null) {
+      await ctx.runMutation(internal.syncPlayer.internalReleaseSmmoRequest, {
+        userId,
+        reservedAt,
+      });
+    }
+    throw e;
+  }
 }
 
 export const validateAndSaveCredentials = action({
@@ -385,6 +418,9 @@ export const validateAndSaveCredentials = action({
 
     const key = args.smmoApiKey.trim();
     if (!key) throw new Error("API key is required.");
+    if (!Number.isInteger(args.smmoPlayerId) || args.smmoPlayerId <= 0) {
+      throw new Error("Player ID must be a positive integer.");
+    }
 
     const existing = await ctx.runQuery(internal.syncPlayer.internalGetApiKeysRow, { userId });
     const path = `/v1/player/info/${args.smmoPlayerId}`;

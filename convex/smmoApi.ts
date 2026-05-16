@@ -43,6 +43,9 @@ export async function smmoFetchJson<T = unknown>(apiKey: string, path: string): 
   });
   const rate = parseRateMeta(res);
   const text = await res.text();
+  if (res.ok && text.trim() === "") {
+    throw new Error(`SMMO API returned empty body (HTTP ${res.status})`);
+  }
   let json: T;
   try {
     json = (text ? JSON.parse(text) : {}) as T;
@@ -122,14 +125,24 @@ function statKey(stat: unknown): string {
   return typeof stat === "string" ? stat.trim().toLowerCase() : "";
 }
 
+function modifierValue(mod: unknown): number | undefined {
+  if (typeof mod === "number" && !Number.isNaN(mod)) return mod;
+  if (typeof mod === "string" && mod.trim() !== "") {
+    const n = Number(mod);
+    if (!Number.isNaN(n)) return n;
+  }
+  return undefined;
+}
+
 /** Map item stat1/2/3 + modifiers into str/def bonus fields used by the UI. */
 export function itemStatBonuses(item: Record<string, unknown>): { strBonus?: number; defBonus?: number } {
   const out: { strBonus?: number; defBonus?: number } = {};
   const apply = (stat: unknown, mod: unknown) => {
-    if (typeof mod !== "number") return;
+    const value = modifierValue(mod);
+    if (value === undefined) return;
     const k = statKey(stat);
-    if (k.includes("str") || k === "strength") out.strBonus = mod;
-    else if (k.includes("def") || k === "defence" || k === "defense") out.defBonus = mod;
+    if (k.includes("str") || k === "strength") out.strBonus = value;
+    else if (k.includes("def") || k === "defence" || k === "defense") out.defBonus = value;
   };
   apply(item.stat1, item.stat1modifier);
   apply(item.stat2, item.stat2modifier);

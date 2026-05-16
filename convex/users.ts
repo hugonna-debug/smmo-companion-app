@@ -25,6 +25,14 @@ export const deleteAccount = mutation({
       await ctx.db.delete(session._id);
     }
 
+    const apiKeyRow = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (apiKeyRow) {
+      await ctx.db.delete(apiKeyRow._id);
+    }
+
     await ctx.db.delete(userId);
 
     return { success: true };
