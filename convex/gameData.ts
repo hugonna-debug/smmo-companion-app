@@ -515,6 +515,114 @@ export const getSettings = query({
   },
 });
 
+export const getApiKeyStatus = query({
+  args: {},
+  returns: v.object({
+    configured: v.boolean(),
+    smmoPlayerId: v.optional(v.number()),
+    lastValidated: v.optional(v.number()),
+    lastSyncAt: v.optional(v.number()),
+    rateLimitLimit: v.optional(v.number()),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitResetAt: v.optional(v.number()),
+  }),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return {
+        configured: false,
+      };
+    }
+
+    const credentials = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!credentials) {
+      return {
+        configured: false,
+      };
+    }
+
+    return {
+      configured: true,
+      smmoPlayerId: credentials.smmoPlayerId,
+      lastValidated: credentials.lastValidated,
+      lastSyncAt: credentials.lastSyncAt,
+      rateLimitLimit: credentials.rateLimitLimit,
+      rateLimitRemaining: credentials.rateLimitRemaining,
+      rateLimitResetAt: credentials.rateLimitResetAt,
+    };
+  },
+});
+
+export const saveApiCredentials = mutation({
+  args: {
+    smmoApiKey: v.string(),
+    smmoPlayerId: v.number(),
+    rateLimitLimit: v.optional(v.number()),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitResetAt: v.optional(v.number()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+
+    const now = Date.now();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        smmoApiKey: args.smmoApiKey,
+        smmoPlayerId: args.smmoPlayerId,
+        lastValidated: now,
+        rateLimitLimit: args.rateLimitLimit ?? existing.rateLimitLimit,
+        rateLimitRemaining: args.rateLimitRemaining ?? existing.rateLimitRemaining,
+        rateLimitResetAt: args.rateLimitResetAt ?? existing.rateLimitResetAt,
+        rateWindowStartedAt: now,
+        rateWindowCount: 0,
+      });
+    } else {
+      await ctx.db.insert("apiKeys", {
+        userId,
+        smmoApiKey: args.smmoApiKey,
+        smmoPlayerId: args.smmoPlayerId,
+        lastValidated: now,
+        rateLimitLimit: args.rateLimitLimit,
+        rateLimitRemaining: args.rateLimitRemaining,
+        rateLimitResetAt: args.rateLimitResetAt,
+        rateWindowStartedAt: now,
+        rateWindowCount: 0,
+      });
+    }
+    return null;
+  },
+});
+
+export const clearApiCredentials = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+    return null;
+  },
+});
+
 export const updateSettings = mutation({
   args: {
     apiKey: v.optional(v.string()),

@@ -487,6 +487,21 @@ const schema = defineSchema({
     theme: v.string(),
   })
     .index("by_userId", ["userId"]),
+
+  // Secure SMMO API credentials (server-side only)
+  apiKeys: defineTable({
+    userId: v.id("users"),
+    smmoApiKey: v.string(),
+    smmoPlayerId: v.number(),
+    lastValidated: v.number(),
+    lastSyncAt: v.optional(v.number()),
+    rateLimitLimit: v.optional(v.number()),
+    rateLimitRemaining: v.optional(v.number()),
+    rateLimitResetAt: v.optional(v.number()),
+    rateWindowStartedAt: v.optional(v.number()),
+    rateWindowCount: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"]),
 });
 
 export default schema;

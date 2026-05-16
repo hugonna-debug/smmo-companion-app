@@ -1,5 +1,5 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { ChevronRight, Key, Layout, Loader2, Monitor, Settings, Smartphone, User, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -189,10 +189,12 @@ function LayoutSettings() {
 
 export function SettingsPage() {
   const user = useQuery(api.auth.currentUser);
-  const settings = useQuery(api.gameData.getSettings);
-  const updateSettings = useMutation(api.gameData.updateSettings);
+  const apiKeyStatus = useQuery(api.gameData.getApiKeyStatus);
+  const saveApiCredentials = useMutation(api.gameData.saveApiCredentials);
   const clearData = useMutation(api.gameData.clearUserData);
   const seedDemo = useMutation(api.gameData.seedDemoData);
+  const validateApiCredentials = useAction(api.smmoApi.validateApiCredentials);
+  const syncAll = useAction(api.syncPlayer.syncAll);
   const { signIn, signOut } = useAuthActions();
   const deleteAccount = useMutation(api.users.deleteAccount);
   const navigate = useNavigate();
@@ -204,17 +206,56 @@ export function SettingsPage() {
   const [success, setSuccess] = useState("");
   const [passwordStep, setPasswordStep] = useState<"request" | "verify">("request");
   const [apiKey, setApiKey] = useState("");
-  const [savingKey, setSavingKey] = useState(false);
+  const [playerId, setPlayerId] = useState("");
+  const [validatingKey, setValidatingKey] = useState(false);
+  const [syncingData, setSyncingData] = useState(false);
 
-  const handleSaveApiKey = async () => {
-    setSavingKey(true);
+  const handleValidateAndSaveApiKey = async () => {
+    const trimmedKey = apiKey.trim();
+    const parsedPlayerId = Number(playerId || apiKeyStatus?.smmoPlayerId);
+    if (!trimmedKey || !Number.isFinite(parsedPlayerId) || parsedPlayerId <= 0) {
+      toast.error("Enter a valid API key and player ID");
+      return;
+    }
+
+    setValidatingKey(true);
     try {
-      await updateSettings({ apiKey: apiKey || undefined });
-      toast.success("API key saved");
-    } catch {
-      toast.error("Failed to save API key");
+      const validation = await validateApiCredentials({
+        smmoApiKey: trimmedKey,
+        smmoPlayerId: parsedPlayerId,
+      });
+      await saveApiCredentials({
+        smmoApiKey: trimmedKey,
+        smmoPlayerId: validation.playerId,
+        rateLimitLimit: validation.rateLimitLimit,
+        rateLimitRemaining: validation.rateLimitRemaining,
+        rateLimitResetAt: validation.rateLimitResetAt,
+      });
+      setApiKey("");
+      setPlayerId(String(validation.playerId));
+      toast.success(`Validated as ${validation.playerName}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to validate API key";
+      toast.error(message);
     } finally {
-      setSavingKey(false);
+      setValidatingKey(false);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    setSyncingData(true);
+    try {
+      const result = await syncAll({});
+      if (!result.synced) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(result.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Sync failed";
+      toast.error(message);
+    } finally {
+      setSyncingData(false);
     }
   };
 
@@ -280,6 +321,9 @@ export function SettingsPage() {
     }
   };
 
+  const formatTimestamp = (timestamp?: number) =>
+    timestamp ? new Date(timestamp).toLocaleString() : "—";
+
   return (
     <div className="p-3 md:p-4 space-y-4 max-w-2xl">
       <div className="flex items-center gap-2">
@@ -328,26 +372,69 @@ export function SettingsPage() {
               web.simple-mmo.com/p-api/home
             </a>
           </p>
-          <div className="flex gap-2">
+          <p className="text-[10px] text-muted-foreground">
+            Your API key is stored server-side in Convex and never sent back to the client.
+          </p>
+          <div className="space-y-2">
             <Input
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={settings?.apiKey ? "••••••••••" : "Enter API key"}
-              className="flex-1 h-8 text-xs bg-input"
+              placeholder={apiKeyStatus?.configured ? "Enter new API key to rotate" : "Enter API key"}
+              className="h-8 text-xs bg-input"
             />
-            <Button
-              size="sm"
-              className="h-8 text-xs bg-primary text-primary-foreground"
-              onClick={handleSaveApiKey}
-              disabled={savingKey}
-            >
-              {savingKey ? <Loader2 className="size-3 animate-spin" /> : "Save"}
-            </Button>
+            <Input
+              type="number"
+              min={1}
+              value={playerId}
+              onChange={(e) => setPlayerId(e.target.value)}
+              placeholder={apiKeyStatus?.smmoPlayerId ? String(apiKeyStatus.smmoPlayerId) : "Enter player ID"}
+              className="h-8 text-xs bg-input"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                className="h-8 text-xs bg-primary text-primary-foreground"
+                onClick={handleValidateAndSaveApiKey}
+                disabled={validatingKey}
+              >
+                {validatingKey ? <Loader2 className="size-3 animate-spin" /> : "Validate & Save"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={handleSyncNow}
+                disabled={syncingData || !apiKeyStatus?.configured}
+              >
+                {syncingData ? <Loader2 className="size-3 animate-spin" /> : "Sync Now"}
+              </Button>
+            </div>
           </div>
-          {settings?.apiKey && (
-            <p className="text-[10px] text-success">✓ API key configured</p>
-          )}
+          <div className="grid grid-cols-2 gap-2 text-[10px]">
+            <div className="rounded border border-border bg-muted/30 px-2 py-1.5">
+              <p className="text-muted-foreground">Status</p>
+              <p className={apiKeyStatus?.configured ? "text-success" : "text-muted-foreground"}>
+                {apiKeyStatus?.configured ? "Configured" : "Not configured"}
+              </p>
+            </div>
+            <div className="rounded border border-border bg-muted/30 px-2 py-1.5">
+              <p className="text-muted-foreground">Rate Limit</p>
+              <p>
+                {apiKeyStatus?.rateLimitLimit
+                  ? `${apiKeyStatus.rateLimitRemaining ?? 0} / ${apiKeyStatus.rateLimitLimit}`
+                  : "—"}
+              </p>
+            </div>
+            <div className="rounded border border-border bg-muted/30 px-2 py-1.5">
+              <p className="text-muted-foreground">Last Validated</p>
+              <p>{formatTimestamp(apiKeyStatus?.lastValidated)}</p>
+            </div>
+            <div className="rounded border border-border bg-muted/30 px-2 py-1.5">
+              <p className="text-muted-foreground">Last Sync</p>
+              <p>{formatTimestamp(apiKeyStatus?.lastSyncAt)}</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

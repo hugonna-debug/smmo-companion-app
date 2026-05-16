@@ -214,7 +214,7 @@ export function PvpAssistantPage() {
                 </button>
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground">Priority</label>
+                <p className="text-[10px] text-muted-foreground">Priority</p>
                 <div className="flex gap-1 mt-1">
                   {[null, 1, 2, 3].map((p) => (
                     <Button key={`p-${p}`} variant={priorityFilter === p ? "secondary" : "ghost"} size="sm"
