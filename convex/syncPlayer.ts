@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import { type Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { action, internalMutation } from "./_generated/server";
 import { type RateLimitSnapshot, smmoGetJson } from "./smmoApi";
 
@@ -139,10 +139,7 @@ function buildItemName(item: SmmoItemInfo, fallbackItemId: number): string {
   return `Item #${fallbackItemId}`;
 }
 
-type SyncCtx = {
-  runQuery: (...args: unknown[]) => Promise<unknown>;
-  runMutation: (...args: unknown[]) => Promise<unknown>;
-};
+type SyncCtx = any;
 
 async function requireApiCredentials(
   ctx: SyncCtx,
