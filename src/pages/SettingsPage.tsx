@@ -1,7 +1,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { ChevronRight, Key, Layout, Loader2, Monitor, Settings, Smartphone, User, RefreshCw, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -210,12 +210,19 @@ export function SettingsPage() {
   const [validating, setValidating] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [clearingSmmo, setClearingSmmo] = useState(false);
+  const didPrefillPlayerId = useRef(false);
 
   useEffect(() => {
-    if (smmoStatus?.configured && smmoStatus.smmoPlayerId !== undefined && smmoPlayerId === "") {
-      setSmmoPlayerId(String(smmoStatus.smmoPlayerId));
+    if (
+      didPrefillPlayerId.current ||
+      !smmoStatus?.configured ||
+      smmoStatus.smmoPlayerId === undefined
+    ) {
+      return;
     }
-  }, [smmoStatus?.configured, smmoStatus?.smmoPlayerId, smmoPlayerId]);
+    setSmmoPlayerId(String(smmoStatus.smmoPlayerId));
+    didPrefillPlayerId.current = true;
+  }, [smmoStatus?.configured, smmoStatus.smmoPlayerId]);
 
   const resolvePlayerId = (): number | undefined => {
     const raw = smmoPlayerId.trim();
@@ -223,6 +230,8 @@ export function SettingsPage() {
     if (parsed === undefined || !Number.isInteger(parsed) || parsed <= 0) return undefined;
     return parsed;
   };
+
+  const resolvedPlayerId = resolvePlayerId();
 
   const handleValidateAndSave = async () => {
     const key = smmoApiKey.trim();
@@ -267,6 +276,7 @@ export function SettingsPage() {
     setClearingSmmo(true);
     try {
       await clearSmmoCredentials();
+      didPrefillPlayerId.current = false;
       setSmmoPlayerId("");
       toast.success("SMMO credentials removed.");
     } catch {
@@ -427,7 +437,7 @@ export function SettingsPage() {
               size="sm"
               className="h-8 text-xs bg-primary text-primary-foreground"
               onClick={handleValidateAndSave}
-              disabled={validating}
+              disabled={validating || !smmoApiKey.trim() || resolvedPlayerId === undefined}
             >
               {validating ? <Loader2 className="size-3 animate-spin" /> : "Validate & Save"}
             </Button>

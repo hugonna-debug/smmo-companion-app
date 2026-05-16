@@ -33,6 +33,14 @@ export const deleteAccount = mutation({
       await ctx.db.delete(apiKeyRow._id);
     }
 
+    const settings = await ctx.db
+      .query("appSettings")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (settings?.apiKey !== undefined) {
+      await ctx.db.patch(settings._id, { apiKey: undefined });
+    }
+
     await ctx.db.delete(userId);
 
     return { success: true };
