@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
@@ -497,7 +497,6 @@ export const getSettings = query({
       _id: v.id("appSettings"),
       _creationTime: v.number(),
       userId: v.id("users"),
-      apiKey: v.optional(v.string()),
       guildId: v.optional(v.number()),
       autoRefreshInterval: v.number(),
       notificationsEnabled: v.boolean(),
@@ -508,16 +507,26 @@ export const getSettings = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    return await ctx.db
+    const settings = await ctx.db
       .query("appSettings")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
+    if (!settings) return null;
+
+    return {
+      _id: settings._id,
+      _creationTime: settings._creationTime,
+      userId: settings.userId,
+      guildId: settings.guildId,
+      autoRefreshInterval: settings.autoRefreshInterval,
+      notificationsEnabled: settings.notificationsEnabled,
+      theme: settings.theme,
+    };
   },
 });
 
 export const updateSettings = mutation({
   args: {
-    apiKey: v.optional(v.string()),
     guildId: v.optional(v.number()),
     autoRefreshInterval: v.optional(v.number()),
     notificationsEnabled: v.optional(v.boolean()),
@@ -532,7 +541,6 @@ export const updateSettings = mutation({
       .unique();
     if (existing) {
       const update: Record<string, unknown> = {};
-      if (args.apiKey !== undefined) update.apiKey = args.apiKey;
       if (args.guildId !== undefined) update.guildId = args.guildId;
       if (args.autoRefreshInterval !== undefined) update.autoRefreshInterval = args.autoRefreshInterval;
       if (args.notificationsEnabled !== undefined) update.notificationsEnabled = args.notificationsEnabled;
@@ -540,11 +548,114 @@ export const updateSettings = mutation({
     } else {
       await ctx.db.insert("appSettings", {
         userId,
-        apiKey: args.apiKey,
         guildId: args.guildId,
         autoRefreshInterval: args.autoRefreshInterval ?? 60,
         notificationsEnabled: args.notificationsEnabled ?? true,
         theme: "dark",
+      });
+    }
+    return null;
+  },
+});
+
+export const getApiKeyStatus = query({
+  args: {},
+  returns: v.object({
+    hasApiKey: v.boolean(),
+    smmoPlayerId: v.optional(v.number()),
+    lastValidated: v.optional(v.number()),
+    lastSync: v.optional(v.number()),
+    playerName: v.optional(v.string()),
+  }),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { hasApiKey: false };
+
+    const apiKey = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", q => q.eq("userId", userId))
+      .unique();
+    const player = await ctx.db
+      .query("playerData")
+      .withIndex("by_userId", q => q.eq("userId", userId))
+      .unique();
+
+    return {
+      hasApiKey: apiKey !== null,
+      smmoPlayerId: apiKey?.smmoPlayerId,
+      lastValidated: apiKey?.lastValidated,
+      lastSync: player?.lastUpdated,
+      playerName: player?.playerName,
+    };
+  },
+});
+
+export const getSmmoApiKeyInternal = internalQuery({
+  args: { userId: v.id("users") },
+  returns: v.union(
+    v.object({
+      smmoApiKey: v.string(),
+      smmoPlayerId: v.number(),
+      lastValidated: v.number(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const apiKey = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .unique();
+    if (!apiKey) return null;
+
+    return {
+      smmoApiKey: apiKey.smmoApiKey,
+      smmoPlayerId: apiKey.smmoPlayerId,
+      lastValidated: apiKey.lastValidated,
+    };
+  },
+});
+
+export const saveSmmoApiKeyInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    smmoApiKey: v.string(),
+    smmoPlayerId: v.number(),
+    lastValidated: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        smmoApiKey: args.smmoApiKey,
+        smmoPlayerId: args.smmoPlayerId,
+        lastValidated: args.lastValidated,
+      });
+      return null;
+    }
+
+    await ctx.db.insert("apiKeys", args);
+    return null;
+  },
+});
+
+export const touchSmmoApiKeyInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    lastValidated: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        lastValidated: args.lastValidated,
       });
     }
     return null;
@@ -613,7 +724,7 @@ export const seedDemoData = mutation({
       const tables = [
         "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
         "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
-        "worldBosses", "diamondMarket", "orphanage", "appSettings",
+        "worldBosses", "diamondMarket", "orphanage", "appSettings", "apiKeys",
         "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
         "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
       ] as const;
@@ -1787,7 +1898,7 @@ export const clearUserData = mutation({
     const tables = [
       "playerData", "playerSkills", "equipment", "templeBoost", "guildInfo", "guildMembers",
       "guildContribution", "guildTask", "guildSanctuary", "guildWars", "pvpTargets", "buffs",
-      "worldBosses", "diamondMarket", "orphanage", "appSettings",
+      "worldBosses", "diamondMarket", "orphanage", "appSettings", "apiKeys",
       "marketTracking", "personalItems", "pvpAssistantQueue", "pvpBlacklist", "aiAdvisorMessages",
       "vaultCodes", "collectionProgress", "playerWatchlist", "tasks", "activeModifiers", "professionStatus",
     ] as const;

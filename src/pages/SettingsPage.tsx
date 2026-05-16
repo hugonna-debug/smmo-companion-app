@@ -1,7 +1,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
-import { ChevronRight, Key, Layout, Loader2, Monitor, Settings, Smartphone, User, RefreshCw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { CheckCircle, ChevronRight, Key, Layout, Loader2, Monitor, RefreshCw, Settings, Smartphone, Trash2, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,17 @@ const POSITION_LABELS: Record<DeadZonePosition, string> = {
   "bottom-right": "Bottom Right",
   "bottom-left": "Bottom Left",
 };
+
+type RateLimitStatus = {
+  limit: number;
+  remaining: number;
+  resetAt: number;
+};
+
+function formatStatusTimestamp(timestamp?: number) {
+  if (!timestamp) return "Never";
+  return new Date(timestamp).toLocaleString();
+}
 
 function LShapePreview({ position, dzWidth, dzHeight }: { position: DeadZonePosition; dzWidth: number; dzHeight: number }) {
   // Mini visual preview of the L-shape layout
@@ -189,8 +200,10 @@ function LayoutSettings() {
 
 export function SettingsPage() {
   const user = useQuery(api.auth.currentUser);
-  const settings = useQuery(api.gameData.getSettings);
-  const updateSettings = useMutation(api.gameData.updateSettings);
+  const apiKeyStatus = useQuery(api.gameData.getApiKeyStatus);
+  const validateApiKey = useAction(api.smmoApi.validateAndSaveApiKey);
+  const syncAll = useAction(api.syncPlayer.syncAll);
+  const getRateLimitStatus = useAction(api.smmoApi.getRateLimitStatus);
   const clearData = useMutation(api.gameData.clearUserData);
   const seedDemo = useMutation(api.gameData.seedDemoData);
   const { signIn, signOut } = useAuthActions();
@@ -204,17 +217,72 @@ export function SettingsPage() {
   const [success, setSuccess] = useState("");
   const [passwordStep, setPasswordStep] = useState<"request" | "verify">("request");
   const [apiKey, setApiKey] = useState("");
+  const [playerId, setPlayerId] = useState("");
   const [savingKey, setSavingKey] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [rateLimit, setRateLimit] = useState<RateLimitStatus | null>(null);
 
-  const handleSaveApiKey = async () => {
+  useEffect(() => {
+    if (apiKeyStatus?.smmoPlayerId && playerId === "") {
+      setPlayerId(String(apiKeyStatus.smmoPlayerId));
+    }
+  }, [apiKeyStatus?.smmoPlayerId, playerId]);
+
+  useEffect(() => {
+    void getRateLimitStatus()
+      .then(setRateLimit)
+      .catch(() => {
+        // Rate limit state is advisory; action failures still surface on sync.
+      });
+  }, [getRateLimitStatus]);
+
+  const handleValidateApiKey = async () => {
+    const parsedPlayerId = Number(playerId);
+    if (!apiKey.trim() || !Number.isInteger(parsedPlayerId) || parsedPlayerId <= 0) {
+      toast.error("Enter both an API key and a valid SMMO player ID");
+      return;
+    }
+
     setSavingKey(true);
     try {
-      await updateSettings({ apiKey: apiKey || undefined });
-      toast.success("API key saved");
+      const result = await validateApiKey({
+        apiKey,
+        playerId: parsedPlayerId,
+      });
+      setRateLimit(result.rateLimit);
+
+      if (!result.success) {
+        toast.error(result.message ?? "Could not validate SMMO API key");
+        return;
+      }
+
+      setApiKey("");
+      toast.success(`API key validated for ${result.playerName ?? "player"}`);
     } catch {
-      toast.error("Failed to save API key");
+      toast.error("Failed to validate SMMO API key");
     } finally {
       setSavingKey(false);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncAll();
+      setRateLimit(result.rateLimit);
+
+      if (!result.success) {
+        toast.error(result.message ?? "Could not sync SMMO data");
+        return;
+      }
+
+      toast.success(
+        `Synced ${result.playerName ?? "player"} (${result.skills ?? 0} skills, ${result.equipment ?? 0} items)`,
+      );
+    } catch {
+      toast.error("Failed to sync SMMO data");
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -313,12 +381,13 @@ export function SettingsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm">
             <Key className="size-4 text-primary" />
-            SMMO API Key
+            Live SMMO API
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <p className="text-[11px] text-muted-foreground">
-            Get your API key from{" "}
+            Store your SimpleMMO API key securely in Convex and sync real player
+            data server-side. Get your key from{" "}
             <a
               href="https://web.simple-mmo.com/p-api/home"
               target="_blank"
@@ -328,25 +397,95 @@ export function SettingsPage() {
               web.simple-mmo.com/p-api/home
             </a>
           </p>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={settings?.apiKey ? "••••••••••" : "Enter API key"}
-              className="flex-1 h-8 text-xs bg-input"
-            />
+
+          <div className="grid gap-2 sm:grid-cols-[1fr_140px]">
+            <div className="space-y-1.5">
+              <Label htmlFor="smmo-api-key" className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                API Key
+              </Label>
+              <Input
+                id="smmo-api-key"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={apiKeyStatus?.hasApiKey ? "Enter a new key to replace" : "Enter API key"}
+                className="h-8 text-xs bg-input"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="smmo-player-id" className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                Player ID
+              </Label>
+              <Input
+                id="smmo-player-id"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={playerId}
+                onChange={(e) => setPlayerId(e.target.value)}
+                placeholder="1143782"
+                className="h-8 text-xs bg-input"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               size="sm"
               className="h-8 text-xs bg-primary text-primary-foreground"
-              onClick={handleSaveApiKey}
+              onClick={handleValidateApiKey}
               disabled={savingKey}
             >
-              {savingKey ? <Loader2 className="size-3 animate-spin" /> : "Save"}
+              {savingKey ? <Loader2 className="size-3 animate-spin" /> : "Validate & Save"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={handleSyncNow}
+              disabled={syncing || !apiKeyStatus?.hasApiKey}
+            >
+              {syncing ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
+              Sync Now
             </Button>
           </div>
-          {settings?.apiKey && (
-            <p className="text-[10px] text-success">✓ API key configured</p>
+
+          {apiKeyStatus?.hasApiKey && (
+            <div className="rounded-lg border border-success/20 bg-success/5 p-3 text-[11px]">
+              <div className="flex items-center gap-1.5 font-medium text-success">
+                <CheckCircle className="size-3.5" />
+                API key configured
+              </div>
+              <div className="mt-2 grid gap-1 text-muted-foreground sm:grid-cols-2">
+                <p>
+                  Player ID:{" "}
+                  <span className="text-foreground">{apiKeyStatus.smmoPlayerId}</span>
+                </p>
+                <p>
+                  Player:{" "}
+                  <span className="text-foreground">{apiKeyStatus.playerName ?? "Pending sync"}</span>
+                </p>
+                <p>
+                  Validated:{" "}
+                  <span className="text-foreground">{formatStatusTimestamp(apiKeyStatus.lastValidated)}</span>
+                </p>
+                <p>
+                  Last sync:{" "}
+                  <span className="text-foreground">{formatStatusTimestamp(apiKeyStatus.lastSync)}</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {rateLimit && (
+            <div className="flex items-center justify-between rounded-md bg-muted/30 px-2 py-1.5 text-[10px] text-muted-foreground">
+              <span>
+                Rate limit: {rateLimit.remaining}/{rateLimit.limit} requests remaining
+              </span>
+              {rateLimit.remaining === 0 && (
+                <span>Resets {new Date(rateLimit.resetAt).toLocaleTimeString()}</span>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

@@ -464,6 +464,15 @@ const schema = defineSchema({
   })
     .index("by_userId", ["userId"]),
 
+  // Server-side SMMO API credentials. Never return smmoApiKey to clients.
+  apiKeys: defineTable({
+    userId: v.id("users"),
+    smmoApiKey: v.string(),
+    smmoPlayerId: v.number(),
+    lastValidated: v.number(),
+  })
+    .index("by_userId", ["userId"]),
+
   // Profession status
   professionStatus: defineTable({
     userId: v.id("users"),
