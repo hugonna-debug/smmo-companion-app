@@ -34,6 +34,14 @@ The app requires two environment variables in `.env.local` at the repo root:
 - `CONVEX_DEPLOY_KEY` — authenticates the Convex CLI for pushing functions and codegen
 - `VITE_CONVEX_URL` — the Convex deployment URL used by the frontend
 
+Add them in **Cursor Dashboard → Cloud Agents → Secrets** (exposed as environment variables). Then generate `.env.local`:
+
+```bash
+bun run env:setup
+```
+
+Cloud agent machines also run [`scripts/cloud-bootstrap.sh`](scripts/cloud-bootstrap.sh) on startup (via [`.cursor/environment.json`](.cursor/environment.json)); when secrets are present it runs `env:setup` and `bun run sync` automatically.
+
 Without these, `bun run sync`, `bun run build`, and the full app cannot function. The Vite dev server will start but the app will error on missing `convex/_generated/` imports.
 
 ### Convex Codegen Gotcha
