@@ -70,6 +70,14 @@ To enable the "Continue as Test User" button on the login page, set `VITE_IS_PRE
 
 `bun run check` reports ~52 formatting issues and 1 lint error (label without `htmlFor`). These are pre-existing in the codebase, not introduced by setup.
 
+### Playwright Browsers
+
+E2E tests and the `test:auth` script require Playwright's Chromium browser, which is **not** installed by `bun install`. Run `bunx playwright install chromium` before running `bun run test`, `bun run test:auth`, or `bun run screenshot`. The update script handles this automatically.
+
+### Test User Backend Data
+
+The "Continue as Test User" login may fail if the Convex cloud database has stale or conflicting test accounts (e.g. from a prior deployment). Running `bunx convex run seedTestUser:seedTestUser` re-seeds the user but cannot fix password-hash mismatches on an existing `authAccounts` row. If test login stays broken, the conflicting rows in `authAccounts` and `users` tables must be cleaned up via the Convex dashboard.
+
 ### Network Note
 
 The Cloud Agent VM may experience transient TLS connectivity issues to non-GitHub HTTPS endpoints (including `*.convex.dev` and `*.convex.cloud`). If `bun run sync` or Convex CLI commands hang/fail, retry after a few minutes. The `convex/_generated/` files persist after a successful sync, so builds will continue to work offline.
