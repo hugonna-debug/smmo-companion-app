@@ -53,15 +53,15 @@ export function PvpPage() {
   const filteredTargets = (targets || []).filter((t) => {
     if (t.isSkipped) return false;
     // Level range
-    const min = minLevel ? Number.parseInt(minLevel) : 0;
-    const max = maxLevel ? Number.parseInt(maxLevel) : 999999;
+    const min = minLevel ? Number.parseInt(minLevel, 10) : 0;
+    const max = maxLevel ? Number.parseInt(maxLevel, 10) : 999999;
     if (t.targetLevel < min || t.targetLevel > max) return false;
     // Guild enemies only
     if (guildEnemiesOnly && !enemyGuildIds.includes(t.targetGuildId)) return false;
     // Safe mode filter
     if (hideSafeMode && t.targetSafeMode) return false;
     // Minimum gold
-    const goldMin = minGold ? Number.parseInt(minGold) : 0;
+    const goldMin = minGold ? Number.parseInt(minGold, 10) : 0;
     if (t.targetGold < goldMin) return false;
     // Exclude targets from blacklisted guilds
     const blacklistedIds = blacklisted.map((w) => w.enemyGuildId);

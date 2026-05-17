@@ -42,13 +42,13 @@ export function PvpAssistantPage() {
     if (!queue) return [];
     return queue.filter((t) => {
       if (t.status === "completed" || t.status === "skipped") return false;
-      const min = minLevel ? Number.parseInt(minLevel) : 0;
-      const max = maxLevel ? Number.parseInt(maxLevel) : 999999;
+      const min = minLevel ? Number.parseInt(minLevel, 10) : 0;
+      const max = maxLevel ? Number.parseInt(maxLevel, 10) : 999999;
       if (t.targetLevel < min || t.targetLevel > max) return false;
       if (hideSafe && t.targetSafeMode) return false;
-      const goldMin = minGold ? Number.parseInt(minGold) : 0;
+      const goldMin = minGold ? Number.parseInt(minGold, 10) : 0;
       if (t.targetGold < goldMin) return false;
-      const hpMax = maxHpPercent ? Number.parseInt(maxHpPercent) : 100;
+      const hpMax = maxHpPercent ? Number.parseInt(maxHpPercent, 10) : 100;
       const hpPct = t.targetMaxHp > 0 ? Math.round((t.targetHp / t.targetMaxHp) * 100) : 100;
       if (hpPct > hpMax) return false;
       if (priorityFilter && t.priority !== priorityFilter) return false;
@@ -214,7 +214,7 @@ export function PvpAssistantPage() {
                 </button>
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground">Priority</label>
+                <p className="text-[10px] text-muted-foreground">Priority</p>
                 <div className="flex gap-1 mt-1">
                   {[null, 1, 2, 3].map((p) => (
                     <Button key={`p-${p}`} variant={priorityFilter === p ? "secondary" : "ghost"} size="sm"
