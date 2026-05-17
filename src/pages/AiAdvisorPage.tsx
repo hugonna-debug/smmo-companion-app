@@ -30,10 +30,12 @@ export function AiAdvisorPage() {
   const [isThinking, setIsThinking] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageCount = messages?.length ?? 0;
 
   useEffect(() => {
+    if (messageCount === 0) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messageCount]);
 
   const handleSend = async (text?: string) => {
     const content = text || input.trim();

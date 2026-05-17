@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import {
   Heart,
   Sparkles,
@@ -34,7 +34,7 @@ import {
 
 // XP needed per skill level (simplified scaling)
 function skillXpForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(1.15, level));
+  return Math.floor(100 * 1.15 ** level);
 }
 
 export function DashboardPage() {
@@ -225,7 +225,7 @@ export function DashboardPage() {
       </div>
 
       {/* Profession Status */}
-      {profession && profession.isWorking && (
+      {profession?.isWorking && (
         <ProfessionWidget profession={profession} />
       )}
 
