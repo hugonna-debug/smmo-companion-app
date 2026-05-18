@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SMMO Companion</string>
+    <string name="title_activity_main">SMMO Companion</string>
+    <string name="package_name">com.smmo.companion</string>
+    <string name="custom_url_scheme">com.smmo.companion</string>
+</resources>
