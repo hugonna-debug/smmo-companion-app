@@ -350,6 +350,7 @@ const schema = defineSchema({
     attempts: v.number(),
   })
     .index("by_userId", ["userId"])
+    .index("by_level", ["targetLevel"])
     .index("by_userId_status", ["userId", "status"]),
 
   // PvP Assistant blacklist
