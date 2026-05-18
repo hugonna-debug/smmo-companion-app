@@ -17,6 +17,7 @@ import {
   LandingPage,
   LoginPage,
   MarketPage,
+  MarketHelper,
   PersonalItemsPage,
   PvpAssistantPage,
   PvpPage,
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/buffs" element={<BuffsPage />} />
                 <Route path="/equipment" element={<EquipmentPage />} />
                 <Route path="/market" element={<MarketPage />} />
+                <Route path="/market-helper" element={<MarketHelper />} />
                 <Route path="/items" element={<PersonalItemsPage />} />
                 <Route path="/pvp-assistant" element={<PvpAssistantPage />} />
                 {/* <Route path="/advisor" element={<AiAdvisorPage />} /> */}

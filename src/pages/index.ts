@@ -8,6 +8,7 @@ export { GuildManagement } from "./GuildManagement";
 export { LandingPage } from "./LandingPage";
 export { LoginPage } from "./LoginPage";
 export { MarketPage } from "./MarketPage";
+export { MarketHelper } from "./MarketHelper";
 export { PersonalItemsPage } from "./PersonalItemsPage";
 export { PvpAssistantPage } from "./PvpAssistantPage";
 export { PvpPage } from "./PvpPage";
