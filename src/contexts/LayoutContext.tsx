@@ -1,7 +1,18 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 export type LayoutMode = "normal" | "lshape";
-export type DeadZonePosition = "top-right" | "top-left" | "bottom-right" | "bottom-left";
+export type DeadZonePosition =
+  | "top-right"
+  | "top-left"
+  | "bottom-right"
+  | "bottom-left";
 
 export interface LayoutConfig {
   mode: LayoutMode;
@@ -50,7 +61,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   const [config, setConfigState] = useState<LayoutConfig>(loadConfig);
 
   const setConfig = useCallback((partial: Partial<LayoutConfig>) => {
-    setConfigState((prev) => {
+    setConfigState(prev => {
       const next = { ...prev, ...partial };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
@@ -64,7 +75,9 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   }, [config.mode]);
 
   return (
-    <LayoutContext.Provider value={{ config, setConfig, isLShape: config.mode === "lshape" }}>
+    <LayoutContext.Provider
+      value={{ config, setConfig, isLShape: config.mode === "lshape" }}
+    >
       {children}
     </LayoutContext.Provider>
   );

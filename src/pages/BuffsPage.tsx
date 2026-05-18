@@ -1,17 +1,46 @@
 import { useQuery } from "convex/react";
-import { Timer, Home, Zap, ChevronDown, ChevronRight, Footprints, Sparkles, Target, Shield } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Footprints,
+  Home,
+  Shield,
+  Sparkles,
+  Target,
+  Timer,
+  Zap,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { api } from "../../convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { formatGold, formatTimeRemaining } from "@/lib/gameUtils";
+import { api } from "../../convex/_generated/api";
 
 // Category display info matching real SMMO Active Modifiers page
-const CATEGORY_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  travel: { label: "Travel", icon: <Footprints className="size-4" />, color: "text-chart-5" },
-  chest: { label: "Chest", icon: <Target className="size-4" />, color: "text-gold-accent" },
-  battle: { label: "Battle", icon: <Shield className="size-4" />, color: "text-destructive" },
-  quest: { label: "Quest", icon: <Sparkles className="size-4" />, color: "text-blue-400" },
+const CATEGORY_META: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string }
+> = {
+  travel: {
+    label: "Travel",
+    icon: <Footprints className="size-4" />,
+    color: "text-chart-5",
+  },
+  chest: {
+    label: "Chest",
+    icon: <Target className="size-4" />,
+    color: "text-gold-accent",
+  },
+  battle: {
+    label: "Battle",
+    icon: <Shield className="size-4" />,
+    color: "text-destructive",
+  },
+  quest: {
+    label: "Quest",
+    icon: <Sparkles className="size-4" />,
+    color: "text-blue-400",
+  },
 };
 
 const MODIFIER_LABELS: Record<string, string> = {
@@ -39,9 +68,12 @@ export function BuffsPage() {
 
   // Group modifiers by category
   const categories = ["travel", "chest", "battle", "quest"];
-  const byCat: Record<string, typeof modifiers extends (infer T)[] | null ? T[] : never[]> = {};
+  const byCat: Record<
+    string,
+    typeof modifiers extends (infer T)[] | null ? T[] : never[]
+  > = {};
   for (const cat of categories) {
-    byCat[cat] = (modifiers || []).filter((m) => m.category === cat);
+    byCat[cat] = (modifiers || []).filter(m => m.category === cat);
   }
 
   // Count total active modifiers
@@ -56,7 +88,10 @@ export function BuffsPage() {
           <h1 className="text-lg font-bold">Active Modifiers</h1>
         </div>
         {totalMods > 0 && (
-          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+          <Badge
+            variant="outline"
+            className="text-[10px] border-primary/30 text-primary"
+          >
             {totalMods} active
           </Badge>
         )}
@@ -73,7 +108,7 @@ export function BuffsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {categories.map((cat) => {
+          {categories.map(cat => {
             const catMods = byCat[cat];
             if (!catMods || catMods.length === 0) return null;
             const meta = CATEGORY_META[cat];
@@ -105,8 +140,13 @@ export function BuffsPage() {
 
                 {/* Modifier rows (always visible as summary) */}
                 <div className="mt-2 space-y-2">
-                  {catMods.map((mod) => (
-                    <ModifierRow key={mod._id} mod={mod} isExpanded={isExpanded} color={meta.color} />
+                  {catMods.map(mod => (
+                    <ModifierRow
+                      key={mod._id}
+                      mod={mod}
+                      isExpanded={isExpanded}
+                      color={meta.color}
+                    />
                   ))}
                 </div>
               </div>
@@ -122,20 +162,42 @@ export function BuffsPage() {
             <Home className="size-4 text-chart-2" />
             <p className="text-sm font-bold">Orphanage</p>
           </div>
-          {orphanage.map((tier) => (
-            <div key={tier._id} className={`game-card ${tier.inProgress ? "border-chart-2/20" : ""}`}>
+          {orphanage.map(tier => (
+            <div
+              key={tier._id}
+              className={`game-card ${tier.inProgress ? "border-chart-2/20" : ""}`}
+            >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <Zap className={`size-3.5 ${tier.isActive ? "text-primary" : tier.inProgress ? "text-chart-2" : "text-muted-foreground"}`} />
+                  <Zap
+                    className={`size-3.5 ${tier.isActive ? "text-primary" : tier.inProgress ? "text-chart-2" : "text-muted-foreground"}`}
+                  />
                   <span className="text-sm font-semibold">{tier.tierName}</span>
                 </div>
-                {tier.isActive && <Badge className="text-[9px] bg-success/15 text-success border-0">COMPLETE</Badge>}
-                {tier.inProgress && <Badge variant="secondary" className="text-[9px]">IN PROGRESS</Badge>}
-                {!tier.isActive && !tier.inProgress && <Badge variant="outline" className="text-[9px] text-muted-foreground">LOCKED</Badge>}
+                {tier.isActive && (
+                  <Badge className="text-[9px] bg-success/15 text-success border-0">
+                    COMPLETE
+                  </Badge>
+                )}
+                {tier.inProgress && (
+                  <Badge variant="secondary" className="text-[9px]">
+                    IN PROGRESS
+                  </Badge>
+                )}
+                {!tier.isActive && !tier.inProgress && (
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] text-muted-foreground"
+                  >
+                    LOCKED
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center gap-2 mb-1.5">
                 <Progress value={tier.percentage} className="h-1.5" />
-                <span className="text-[10px] font-mono text-primary">{tier.percentage}%</span>
+                <span className="text-[10px] font-mono text-primary">
+                  {tier.percentage}%
+                </span>
               </div>
               <div className="text-[10px] text-muted-foreground mb-1">
                 {formatGold(tier.currentValue)} / {formatGold(tier.targetValue)}
@@ -146,8 +208,11 @@ export function BuffsPage() {
                 )}
               </div>
               <div className="flex flex-wrap gap-1">
-                {tier.effects.map((effect) => (
-                  <span key={effect} className="text-[9px] px-1.5 py-0.5 rounded bg-secondary/50 text-foreground/80">
+                {tier.effects.map(effect => (
+                  <span
+                    key={effect}
+                    className="text-[9px] px-1.5 py-0.5 rounded bg-secondary/50 text-foreground/80"
+                  >
                     {effect}
                   </span>
                 ))}
@@ -213,11 +278,18 @@ function ModifierRow({
   );
 }
 
-function SourceItem({ source }: {
-  source: { name: string; percent: number; expiresAt?: number; isPermanent: boolean };
+function SourceItem({
+  source,
+}: {
+  source: {
+    name: string;
+    percent: number;
+    expiresAt?: number;
+    isPermanent: boolean;
+  };
 }) {
   const [timeLeft, setTimeLeft] = useState(
-    source.expiresAt ? formatTimeRemaining(source.expiresAt) : ""
+    source.expiresAt ? formatTimeRemaining(source.expiresAt) : "",
   );
   const isExpired = source.expiresAt ? source.expiresAt <= Date.now() : false;
 
@@ -230,7 +302,9 @@ function SourceItem({ source }: {
   }, [source.expiresAt, isExpired, source.isPermanent]);
 
   return (
-    <div className={`flex items-center justify-between text-[11px] ${isExpired ? "opacity-40" : ""}`}>
+    <div
+      className={`flex items-center justify-between text-[11px] ${isExpired ? "opacity-40" : ""}`}
+    >
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">{source.name}</span>
         <span className="text-success font-medium">+{source.percent}%</span>
@@ -238,7 +312,9 @@ function SourceItem({ source }: {
       {source.isPermanent ? (
         <span className="text-[10px] text-primary font-mono">∞</span>
       ) : source.expiresAt ? (
-        <span className={`text-[10px] font-mono ${isExpired ? "text-destructive" : "text-primary"}`}>
+        <span
+          className={`text-[10px] font-mono ${isExpired ? "text-destructive" : "text-primary"}`}
+        >
           {timeLeft}
         </span>
       ) : null}

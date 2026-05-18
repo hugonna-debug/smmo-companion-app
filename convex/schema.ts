@@ -74,8 +74,7 @@ const schema = defineSchema({
     locationId: v.optional(v.number()),
     locationName: v.optional(v.string()),
     lastUpdated: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Player skills (7 skills total)
   playerSkills: defineTable({
@@ -83,8 +82,7 @@ const schema = defineSchema({
     skill: v.string(),
     level: v.number(),
     exp: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Equipment slots (14 real slots)
   equipment: defineTable({
@@ -114,8 +112,7 @@ const schema = defineSchema({
     worshipsUsedToday: v.number(),
     maxWorshipsPerDay: v.number(),
     worshipResetAt: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Guild detailed info
   guildInfo: defineTable({
@@ -130,8 +127,7 @@ const schema = defineSchema({
     memberCount: v.number(),
     eligibleForWar: v.boolean(),
     icon: v.optional(v.string()),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Guild members
   guildMembers: defineTable({
@@ -148,8 +144,7 @@ const schema = defineSchema({
     npcKills: v.optional(v.number()),
     pvpKills: v.number(),
     lastActivity: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Guild member contribution (own guild only)
   guildContribution: defineTable({
@@ -163,8 +158,7 @@ const schema = defineSchema({
     pvpExp: v.number(),
     taxGuildBank: v.optional(v.number()),
     taxSanctuary: v.optional(v.number()),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Guild wars data
   guildWars: defineTable({
@@ -175,8 +169,7 @@ const schema = defineSchema({
     enemyScore: v.number(),
     status: v.optional(v.string()),
     isBlacklisted: v.boolean(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Guild task (own guild only)
   guildTask: defineTable({
@@ -186,8 +179,7 @@ const schema = defineSchema({
     targetAmount: v.number(),
     expReward: v.number(),
     powerPointReward: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Guild sanctuary tiers
   guildSanctuary: defineTable({
@@ -200,8 +192,7 @@ const schema = defineSchema({
     percentage: v.number(),
     isActive: v.boolean(),
     inProgress: v.boolean(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // PvP targets generated from guild wars
   pvpTargets: defineTable({
@@ -215,8 +206,7 @@ const schema = defineSchema({
     targetGold: v.number(),
     targetSafeMode: v.boolean(),
     isSkipped: v.boolean(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Active buffs/timers
   buffs: defineTable({
@@ -226,8 +216,7 @@ const schema = defineSchema({
     expiresAt: v.number(),
     bonusPercent: v.optional(v.number()),
     iconEmoji: v.optional(v.string()),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // World bosses
   worldBosses: defineTable({
@@ -242,8 +231,7 @@ const schema = defineSchema({
     currentHp: v.number(),
     maxHp: v.number(),
     enableTime: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Item information (cached lookups)
   items: defineTable({
@@ -279,8 +267,7 @@ const schema = defineSchema({
     diamondsRemaining: v.number(),
     pricePerDiamond: v.number(),
     lastUpdated: v.string(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Orphanage tiers
   orphanage: defineTable({
@@ -293,8 +280,7 @@ const schema = defineSchema({
     percentage: v.number(),
     isActive: v.boolean(),
     inProgress: v.boolean(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Market tracked items (watchlist)
   marketTracking: defineTable({
@@ -306,10 +292,14 @@ const schema = defineSchema({
     currentLow: v.optional(v.number()),
     currentHigh: v.optional(v.number()),
     lastPrice: v.optional(v.number()),
-    priceHistory: v.optional(v.array(v.object({
-      price: v.number(),
-      timestamp: v.number(),
-    }))),
+    priceHistory: v.optional(
+      v.array(
+        v.object({
+          price: v.number(),
+          timestamp: v.number(),
+        }),
+      ),
+    ),
     circulation: v.optional(v.number()),
     notes: v.optional(v.string()),
     alertBelow: v.optional(v.number()),
@@ -369,8 +359,7 @@ const schema = defineSchema({
     targetName: v.string(),
     reason: v.optional(v.string()),
     addedAt: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // AI Advisor chat history
   aiAdvisorMessages: defineTable({
@@ -379,8 +368,7 @@ const schema = defineSchema({
     content: v.string(),
     category: v.optional(v.string()), // "build" | "market" | "war" | "general"
     timestamp: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Vault codes (Simple Wolf)
   vaultCodes: defineTable({
@@ -394,8 +382,7 @@ const schema = defineSchema({
     addedAt: v.number(),
     redeemedAt: v.optional(v.number()),
     notes: v.optional(v.string()),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Collection progress (avatars, showcases, achievements)
   collectionProgress: defineTable({
@@ -431,8 +418,7 @@ const schema = defineSchema({
     notes: v.optional(v.string()),
     addedAt: v.number(),
     lastChecked: v.number(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Tasks (daily/weekly/monthly)
   tasks: defineTable({
@@ -445,8 +431,7 @@ const schema = defineSchema({
     otherReward: v.optional(v.string()),
     isCompleted: v.boolean(),
     refreshAt: v.optional(v.number()),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // Active Modifiers (travel/chest/battle/quest)
   activeModifiers: defineTable({
@@ -455,14 +440,15 @@ const schema = defineSchema({
     modifierType: v.string(), // "step_speed" | "experience" | "drop_rate" | "gold"
     totalPercent: v.number(),
     sourceCount: v.number(),
-    sources: v.array(v.object({
-      name: v.string(),
-      percent: v.number(),
-      expiresAt: v.optional(v.number()),
-      isPermanent: v.boolean(),
-    })),
-  })
-    .index("by_userId", ["userId"]),
+    sources: v.array(
+      v.object({
+        name: v.string(),
+        percent: v.number(),
+        expiresAt: v.optional(v.number()),
+        isPermanent: v.boolean(),
+      }),
+    ),
+  }).index("by_userId", ["userId"]),
 
   // Profession status
   professionStatus: defineTable({
@@ -474,8 +460,7 @@ const schema = defineSchema({
     expReward: v.optional(v.number()),
     profPointReward: v.optional(v.number()),
     goldReward: v.optional(v.number()),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // SMMO API credentials (server-side only; never expose smmoApiKey to clients)
   apiKeys: defineTable({
@@ -489,8 +474,7 @@ const schema = defineSchema({
     smmoRequestLog: v.optional(v.array(v.number())),
     rateLimitRemaining: v.optional(v.number()),
     rateLimitLimit: v.optional(v.number()),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   // App settings
   appSettings: defineTable({
@@ -500,8 +484,7 @@ const schema = defineSchema({
     autoRefreshInterval: v.number(),
     notificationsEnabled: v.boolean(),
     theme: v.string(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 });
 
 export default schema;

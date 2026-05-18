@@ -27,7 +27,7 @@ export const deleteAccount = mutation({
 
     const apiKeyRow = await ctx.db
       .query("apiKeys")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
     if (apiKeyRow) {
       await ctx.db.delete(apiKeyRow._id);
@@ -35,7 +35,7 @@ export const deleteAccount = mutation({
 
     const settings = await ctx.db
       .query("appSettings")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
     if (settings?.apiKey !== undefined) {
       await ctx.db.patch(settings._id, { apiKey: undefined });

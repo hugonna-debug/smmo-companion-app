@@ -1,4 +1,10 @@
-import { LayoutDashboard, Settings, Crosshair, Brain, MoreHorizontal } from "lucide-react";
+import {
+  Brain,
+  Crosshair,
+  LayoutDashboard,
+  MoreHorizontal,
+  Settings,
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
@@ -14,7 +20,7 @@ export function BottomNav() {
 
   return (
     <nav className="bottom-nav">
-      {navItems.map((item) => {
+      {navItems.map(item => {
         const isActive = location.pathname === item.href;
         return (
           <Link

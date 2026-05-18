@@ -41,24 +41,30 @@ async function main() {
   try {
     console.log(`⏳ Waiting for server at ${PREVIEW_URL}...`);
     const ready = await waitForServer(PREVIEW_URL, MAX_WAIT_MS);
-    if (!ready) { console.error("❌ Server failed to start."); process.exit(1); }
+    if (!ready) {
+      console.error("❌ Server failed to start.");
+      process.exit(1);
+    }
 
     process.env.APP_URL = PREVIEW_URL;
     const helper = await createPageHelper();
 
     // Set L-shape layout in localStorage BEFORE navigating
     await helper.page.evaluate(() => {
-      localStorage.setItem("smmo-layout-config", JSON.stringify({
-        mode: "lshape",
-        deadZonePosition: "top-right",
-        deadZoneWidth: 60,
-        deadZoneHeight: 70,
-      }));
+      localStorage.setItem(
+        "smmo-layout-config",
+        JSON.stringify({
+          mode: "lshape",
+          deadZonePosition: "top-right",
+          deadZoneWidth: 60,
+          deadZoneHeight: 70,
+        }),
+      );
     });
 
     // Use mobile viewport (phone in portrait)
     await helper.page.setViewportSize({ width: 400, height: 800 });
-    
+
     // Navigate to dashboard in L-shape mode
     await helper.goto("/dashboard");
     await helper.page.waitForTimeout(2000);
@@ -78,12 +84,15 @@ async function main() {
 
     // Also screenshot with dead zone in different position
     await helper.page.evaluate(() => {
-      localStorage.setItem("smmo-layout-config", JSON.stringify({
-        mode: "lshape",
-        deadZonePosition: "top-left",
-        deadZoneWidth: 60,
-        deadZoneHeight: 70,
-      }));
+      localStorage.setItem(
+        "smmo-layout-config",
+        JSON.stringify({
+          mode: "lshape",
+          deadZonePosition: "top-left",
+          deadZoneWidth: 60,
+          deadZoneHeight: 70,
+        }),
+      );
     });
     await helper.goto("/dashboard");
     await helper.page.waitForTimeout(1500);
@@ -96,4 +105,7 @@ async function main() {
   }
 }
 
-main().catch(err => { console.error("Failed:", err); process.exit(1); });
+main().catch(err => {
+  console.error("Failed:", err);
+  process.exit(1);
+});

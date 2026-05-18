@@ -8,23 +8,23 @@ import { Toaster } from "./components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import {
-  DashboardPage,
-  LandingPage,
-  LoginPage,
-  SettingsPage,
-  SignupPage,
-  PvpPage,
   BuffsPage,
+  CollectionPage,
+  DashboardPage,
   EquipmentPage,
   GuildPage,
-  WorldBossPage,
+  LandingPage,
+  LoginPage,
   MarketPage,
   PersonalItemsPage,
   PvpAssistantPage,
+  PvpPage,
+  SettingsPage,
+  SignupPage,
   // AiAdvisorPage,
   VaultPage,
-  CollectionPage,
   WatchlistPage,
+  WorldBossPage,
 } from "./pages";
 
 function App() {
@@ -32,38 +32,38 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark" switchable={false}>
         <LayoutProvider>
-        <Toaster />
-        <Routes>
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route element={<PublicOnlyRoute />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
+          <Toaster />
+          <Routes>
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route element={<PublicOnlyRoute />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/pvp" element={<PvpPage />} />
-              <Route path="/guild" element={<GuildPage />} />
-              <Route path="/bosses" element={<WorldBossPage />} />
-              <Route path="/buffs" element={<BuffsPage />} />
-              <Route path="/equipment" element={<EquipmentPage />} />
-              <Route path="/market" element={<MarketPage />} />
-              <Route path="/items" element={<PersonalItemsPage />} />
-              <Route path="/pvp-assistant" element={<PvpAssistantPage />} />
-              {/* <Route path="/advisor" element={<AiAdvisorPage />} /> */}
-              <Route path="/vault" element={<VaultPage />} />
-              <Route path="/collection" element={<CollectionPage />} />
-              <Route path="/watchlist" element={<WatchlistPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/pvp" element={<PvpPage />} />
+                <Route path="/guild" element={<GuildPage />} />
+                <Route path="/bosses" element={<WorldBossPage />} />
+                <Route path="/buffs" element={<BuffsPage />} />
+                <Route path="/equipment" element={<EquipmentPage />} />
+                <Route path="/market" element={<MarketPage />} />
+                <Route path="/items" element={<PersonalItemsPage />} />
+                <Route path="/pvp-assistant" element={<PvpAssistantPage />} />
+                {/* <Route path="/advisor" element={<AiAdvisorPage />} /> */}
+                <Route path="/vault" element={<VaultPage />} />
+                <Route path="/collection" element={<CollectionPage />} />
+                <Route path="/watchlist" element={<WatchlistPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </LayoutProvider>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </LayoutProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

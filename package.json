@@ -21,7 +21,8 @@
     "screenshot": "bun run --bun scripts/screenshot.ts",
     "env:get": "bunx convex env get",
     "env:list": "bunx convex env list",
-    "env:setup": "bun run --bun scripts/setup-env-local.ts"
+    "env:setup": "bun run --bun scripts/setup-env-local.ts",
+    "codegen:mock": "node scripts/generate-mock-convex.cjs"
   },
   "dependencies": {
     "@auth/core": "^0.37.4",

@@ -1,8 +1,20 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { ChevronRight, Key, Layout, Loader2, Monitor, Settings, Smartphone, User, RefreshCw, Trash2 } from "lucide-react";
+import {
+  ChevronRight,
+  Key,
+  Layout,
+  Loader2,
+  Monitor,
+  RefreshCw,
+  Settings,
+  Smartphone,
+  Trash2,
+  User,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +29,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "../../convex/_generated/api";
-import { toast } from "sonner";
-import { useLayout, type DeadZonePosition, type LayoutMode } from "../contexts/LayoutContext";
+import {
+  type DeadZonePosition,
+  type LayoutMode,
+  useLayout,
+} from "../contexts/LayoutContext";
 
 const POSITION_LABELS: Record<DeadZonePosition, string> = {
   "top-right": "Top Right",
@@ -27,7 +42,15 @@ const POSITION_LABELS: Record<DeadZonePosition, string> = {
   "bottom-left": "Bottom Left",
 };
 
-function LShapePreview({ position, dzWidth, dzHeight }: { position: DeadZonePosition; dzWidth: number; dzHeight: number }) {
+function LShapePreview({
+  position,
+  dzWidth,
+  dzHeight,
+}: {
+  position: DeadZonePosition;
+  dzWidth: number;
+  dzHeight: number;
+}) {
   // Mini visual preview of the L-shape layout
   const w = dzWidth;
   const h = dzHeight;
@@ -55,7 +78,9 @@ function LShapePreview({ position, dzWidth, dzHeight }: { position: DeadZonePosi
         style={getDeadStyle()}
       >
         <span className="text-[8px] text-red-300 font-medium text-center leading-tight px-1">
-          Game<br />Window
+          Game
+          <br />
+          Window
         </span>
       </div>
       {/* Label */}
@@ -79,7 +104,8 @@ function LayoutSettings() {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-[11px] text-muted-foreground">
-          L-Shape mode leaves a transparent zone for your game in split-screen. Content wraps around it.
+          L-Shape mode leaves a transparent zone for your game in split-screen.
+          Content wraps around it.
         </p>
 
         {/* Mode toggle */}
@@ -128,22 +154,26 @@ function LayoutSettings() {
               />
               <div className="flex-1 space-y-3">
                 <div>
-                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Game Window Position</Label>
+                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                    Game Window Position
+                  </Label>
                   <div className="grid grid-cols-2 gap-1.5 mt-1.5">
-                    {(Object.keys(POSITION_LABELS) as DeadZonePosition[]).map((pos) => (
-                      <button
-                        key={pos}
-                        type="button"
-                        onClick={() => setConfig({ deadZonePosition: pos })}
-                        className={`text-[10px] rounded px-2 py-1.5 border transition-all ${
-                          config.deadZonePosition === pos
-                            ? "border-primary bg-primary/10 text-primary font-medium"
-                            : "border-border hover:bg-muted/50 text-muted-foreground"
-                        }`}
-                      >
-                        {POSITION_LABELS[pos]}
-                      </button>
-                    ))}
+                    {(Object.keys(POSITION_LABELS) as DeadZonePosition[]).map(
+                      pos => (
+                        <button
+                          key={pos}
+                          type="button"
+                          onClick={() => setConfig({ deadZonePosition: pos })}
+                          className={`text-[10px] rounded px-2 py-1.5 border transition-all ${
+                            config.deadZonePosition === pos
+                              ? "border-primary bg-primary/10 text-primary font-medium"
+                              : "border-border hover:bg-muted/50 text-muted-foreground"
+                          }`}
+                        >
+                          {POSITION_LABELS[pos]}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
               </div>
@@ -153,29 +183,41 @@ function LayoutSettings() {
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between mb-1">
-                  <Label className="text-[10px] text-muted-foreground">Game Width</Label>
-                  <span className="text-[10px] text-muted-foreground">{config.deadZoneWidth}%</span>
+                  <Label className="text-[10px] text-muted-foreground">
+                    Game Width
+                  </Label>
+                  <span className="text-[10px] text-muted-foreground">
+                    {config.deadZoneWidth}%
+                  </span>
                 </div>
                 <input
                   type="range"
                   min={25}
                   max={80}
                   value={config.deadZoneWidth}
-                  onChange={(e) => setConfig({ deadZoneWidth: Number(e.target.value) })}
+                  onChange={e =>
+                    setConfig({ deadZoneWidth: Number(e.target.value) })
+                  }
                   className="w-full h-1.5 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
                 />
               </div>
               <div>
                 <div className="flex justify-between mb-1">
-                  <Label className="text-[10px] text-muted-foreground">Game Height</Label>
-                  <span className="text-[10px] text-muted-foreground">{config.deadZoneHeight}%</span>
+                  <Label className="text-[10px] text-muted-foreground">
+                    Game Height
+                  </Label>
+                  <span className="text-[10px] text-muted-foreground">
+                    {config.deadZoneHeight}%
+                  </span>
                 </div>
                 <input
                   type="range"
                   min={25}
                   max={80}
                   value={config.deadZoneHeight}
-                  onChange={(e) => setConfig({ deadZoneHeight: Number(e.target.value) })}
+                  onChange={e =>
+                    setConfig({ deadZoneHeight: Number(e.target.value) })
+                  }
                   className="w-full h-1.5 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
                 />
               </div>
@@ -204,7 +246,9 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [passwordStep, setPasswordStep] = useState<"request" | "verify">("request");
+  const [passwordStep, setPasswordStep] = useState<"request" | "verify">(
+    "request",
+  );
   const [smmoApiKey, setSmmoApiKey] = useState("");
   const [smmoPlayerId, setSmmoPlayerId] = useState("");
   const [validating, setValidating] = useState(false);
@@ -227,7 +271,8 @@ export function SettingsPage() {
   const resolvePlayerId = (): number | undefined => {
     const raw = smmoPlayerId.trim();
     const parsed = raw ? Number(raw) : smmoStatus?.smmoPlayerId;
-    if (parsed === undefined || !Number.isInteger(parsed) || parsed <= 0) return undefined;
+    if (parsed === undefined || !Number.isInteger(parsed) || parsed <= 0)
+      return undefined;
     return parsed;
   };
 
@@ -362,11 +407,15 @@ export function SettingsPage() {
           <div className="flex items-end gap-3">
             <Avatar className="size-12 border-2 border-background shadow">
               <AvatarFallback className="text-sm bg-primary/20 text-primary font-bold">
-                {user?.name?.charAt(0).toUpperCase() || <User className="size-4" />}
+                {user?.name?.charAt(0).toUpperCase() || (
+                  <User className="size-4" />
+                )}
               </AvatarFallback>
             </Avatar>
             <div className="pb-0.5">
-              <p className="font-semibold text-sm">{user?.name || "Adventurer"}</p>
+              <p className="font-semibold text-sm">
+                {user?.name || "Adventurer"}
+              </p>
               <p className="text-[11px] text-muted-foreground">{user?.email}</p>
             </div>
           </div>
@@ -386,7 +435,8 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-[11px] text-muted-foreground">
-            Your API key is stored only in Convex and used from the server. Get a key from{" "}
+            Your API key is stored only in Convex and used from the server. Get
+            a key from{" "}
             <a
               href="https://web.simple-mmo.com/p-api/home"
               target="_blank"
@@ -399,21 +449,31 @@ export function SettingsPage() {
           </p>
           <div className="space-y-2">
             <div className="space-y-1">
-              <Label htmlFor="smmo-api-key" className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              <Label
+                htmlFor="smmo-api-key"
+                className="text-[10px] text-muted-foreground uppercase tracking-wider"
+              >
                 API key
               </Label>
               <Input
                 id="smmo-api-key"
                 type="password"
                 value={smmoApiKey}
-                onChange={(e) => setSmmoApiKey(e.target.value)}
-                placeholder={smmoStatus?.configured ? "Enter new key to replace" : "Paste API key"}
+                onChange={e => setSmmoApiKey(e.target.value)}
+                placeholder={
+                  smmoStatus?.configured
+                    ? "Enter new key to replace"
+                    : "Paste API key"
+                }
                 className="h-8 text-xs bg-input"
                 autoComplete="off"
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="smmo-player-id" className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              <Label
+                htmlFor="smmo-player-id"
+                className="text-[10px] text-muted-foreground uppercase tracking-wider"
+              >
                 Player ID
               </Label>
               <Input
@@ -421,9 +481,10 @@ export function SettingsPage() {
                 type="text"
                 inputMode="numeric"
                 value={smmoPlayerId}
-                onChange={(e) => setSmmoPlayerId(e.target.value)}
+                onChange={e => setSmmoPlayerId(e.target.value)}
                 placeholder={
-                  smmoStatus?.configured && smmoStatus.smmoPlayerId !== undefined
+                  smmoStatus?.configured &&
+                  smmoStatus.smmoPlayerId !== undefined
                     ? String(smmoStatus.smmoPlayerId)
                     : "Your SMMO user ID"
                 }
@@ -437,9 +498,17 @@ export function SettingsPage() {
               size="sm"
               className="h-8 text-xs bg-primary text-primary-foreground"
               onClick={handleValidateAndSave}
-              disabled={validating || !smmoApiKey.trim() || resolvedPlayerId === undefined}
+              disabled={
+                validating ||
+                !smmoApiKey.trim() ||
+                resolvedPlayerId === undefined
+              }
             >
-              {validating ? <Loader2 className="size-3 animate-spin" /> : "Validate & Save"}
+              {validating ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                "Validate & Save"
+              )}
             </Button>
             <Button
               size="sm"
@@ -448,7 +517,11 @@ export function SettingsPage() {
               onClick={handleSyncNow}
               disabled={syncing || !smmoStatus?.configured}
             >
-              {syncing ? <Loader2 className="size-3 animate-spin" /> : "Sync Now"}
+              {syncing ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                "Sync Now"
+              )}
             </Button>
             {smmoStatus?.configured && (
               <Button
@@ -458,21 +531,30 @@ export function SettingsPage() {
                 onClick={handleClearSmmo}
                 disabled={clearingSmmo}
               >
-                {clearingSmmo ? <Loader2 className="size-3 animate-spin" /> : "Remove key"}
+                {clearingSmmo ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  "Remove key"
+                )}
               </Button>
             )}
           </div>
           <div className="rounded-md border border-border bg-muted/30 px-2.5 py-2 space-y-1 text-[10px] text-muted-foreground">
             <p>
               <span className="font-medium text-foreground">Status:</span>{" "}
-              {smmoStatus?.configured ? "Connected" : "Not configured (demo data)"}
+              {smmoStatus?.configured
+                ? "Connected"
+                : "Not configured (demo data)"}
             </p>
-            {smmoStatus?.configured && smmoStatus.lastValidated !== undefined && (
-              <p>
-                <span className="font-medium text-foreground">Last validated:</span>{" "}
-                {new Date(smmoStatus.lastValidated).toLocaleString()}
-              </p>
-            )}
+            {smmoStatus?.configured &&
+              smmoStatus.lastValidated !== undefined && (
+                <p>
+                  <span className="font-medium text-foreground">
+                    Last validated:
+                  </span>{" "}
+                  {new Date(smmoStatus.lastValidated).toLocaleString()}
+                </p>
+              )}
             {smmoStatus?.configured && smmoStatus.lastSyncAt !== undefined && (
               <p>
                 <span className="font-medium text-foreground">Last sync:</span>{" "}
@@ -483,9 +565,11 @@ export function SettingsPage() {
               smmoStatus.rateLimitRemaining !== undefined &&
               smmoStatus.rateLimitLimit !== undefined && (
                 <p>
-                  <span className="font-medium text-foreground">API rate limit:</span>{" "}
-                  {smmoStatus.rateLimitRemaining} / {smmoStatus.rateLimitLimit} remaining (per minute, from SMMO
-                  headers)
+                  <span className="font-medium text-foreground">
+                    API rate limit:
+                  </span>{" "}
+                  {smmoStatus.rateLimitRemaining} / {smmoStatus.rateLimitLimit}{" "}
+                  remaining (per minute, from SMMO headers)
                 </p>
               )}
             {smmoStatus?.configured && smmoStatus.lastSyncError && (
@@ -536,7 +620,9 @@ export function SettingsPage() {
           >
             <div>
               <p className="font-medium text-xs">Change Password</p>
-              <p className="text-[11px] text-muted-foreground">Update your password</p>
+              <p className="text-[11px] text-muted-foreground">
+                Update your password
+              </p>
             </div>
             <ChevronRight className="size-3.5 text-muted-foreground" />
           </button>
@@ -546,8 +632,12 @@ export function SettingsPage() {
             className="w-full flex items-center justify-between rounded-lg border border-destructive/20 p-3 transition-colors hover:bg-destructive/5 text-left"
           >
             <div>
-              <p className="font-medium text-xs text-destructive">Delete Account</p>
-              <p className="text-[11px] text-muted-foreground">Permanently remove your data</p>
+              <p className="font-medium text-xs text-destructive">
+                Delete Account
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Permanently remove your data
+              </p>
             </div>
             <Trash2 className="size-3.5 text-destructive" />
           </button>
@@ -568,32 +658,87 @@ export function SettingsPage() {
           {passwordStep === "request" ? (
             <form onSubmit={handleRequestPasswordReset}>
               <p className="text-xs text-muted-foreground py-3">
-                Code will be sent to: <span className="font-medium text-foreground">{user?.email}</span>
+                Code will be sent to:{" "}
+                <span className="font-medium text-foreground">
+                  {user?.email}
+                </span>
               </p>
-              {error && <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5 mb-3">{error}</p>}
+              {error && (
+                <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5 mb-3">
+                  {error}
+                </p>
+              )}
               <DialogFooter>
-                <Button type="button" variant="outline" size="sm" onClick={() => setChangePasswordOpen(false)}>Cancel</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setChangePasswordOpen(false)}
+                >
+                  Cancel
+                </Button>
                 <Button type="submit" size="sm" disabled={loading}>
-                  {loading && <Loader2 className="size-3 animate-spin" />} Send Code
+                  {loading && <Loader2 className="size-3 animate-spin" />} Send
+                  Code
                 </Button>
               </DialogFooter>
             </form>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="code" className="text-xs">Code</Label>
-                <Input id="code" name="code" type="text" placeholder="Enter code" autoComplete="one-time-code" required className="h-8 text-xs" />
+                <Label htmlFor="code" className="text-xs">
+                  Code
+                </Label>
+                <Input
+                  id="code"
+                  name="code"
+                  type="text"
+                  placeholder="Enter code"
+                  autoComplete="one-time-code"
+                  required
+                  className="h-8 text-xs"
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="newPassword" className="text-xs">New Password</Label>
-                <Input id="newPassword" name="newPassword" type="password" placeholder="••••••••" minLength={6} autoComplete="new-password" required className="h-8 text-xs" />
+                <Label htmlFor="newPassword" className="text-xs">
+                  New Password
+                </Label>
+                <Input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  minLength={6}
+                  autoComplete="new-password"
+                  required
+                  className="h-8 text-xs"
+                />
               </div>
-              {error && <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5">{error}</p>}
-              {success && <p className="text-xs text-success bg-success/10 rounded px-2 py-1.5">{success}</p>}
+              {error && (
+                <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5">
+                  {error}
+                </p>
+              )}
+              {success && (
+                <p className="text-xs text-success bg-success/10 rounded px-2 py-1.5">
+                  {success}
+                </p>
+              )}
               <DialogFooter>
-                <Button type="button" variant="outline" size="sm" onClick={() => { setPasswordStep("request"); setError(""); }}>Back</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPasswordStep("request");
+                    setError("");
+                  }}
+                >
+                  Back
+                </Button>
                 <Button type="submit" size="sm" disabled={loading}>
-                  {loading && <Loader2 className="size-3 animate-spin" />} Change Password
+                  {loading && <Loader2 className="size-3 animate-spin" />}{" "}
+                  Change Password
                 </Button>
               </DialogFooter>
             </form>
@@ -605,13 +750,31 @@ export function SettingsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-base">Delete Account</DialogTitle>
-            <DialogDescription className="text-xs">This cannot be undone. All data will be permanently removed.</DialogDescription>
+            <DialogDescription className="text-xs">
+              This cannot be undone. All data will be permanently removed.
+            </DialogDescription>
           </DialogHeader>
-          {error && <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5">{error}</p>}
+          {error && (
+            <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5">
+              {error}
+            </p>
+          )}
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setDeleteAccountOpen(false)}>Cancel</Button>
-            <Button variant="destructive" size="sm" onClick={handleDeleteAccount} disabled={loading}>
-              {loading && <Loader2 className="size-3 animate-spin" />} Delete Account
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteAccountOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteAccount}
+              disabled={loading}
+            >
+              {loading && <Loader2 className="size-3 animate-spin" />} Delete
+              Account
             </Button>
           </DialogFooter>
         </DialogContent>

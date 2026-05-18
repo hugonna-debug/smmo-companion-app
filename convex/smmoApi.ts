@@ -17,7 +17,8 @@ export function parseRateMeta(res: Response): SmmoRateMeta {
   const reset = res.headers.get("X-RateLimit-Reset");
   return {
     limit: limit ? Number(limit) : undefined,
-    remaining: remaining !== null && remaining !== "" ? Number(remaining) : undefined,
+    remaining:
+      remaining !== null && remaining !== "" ? Number(remaining) : undefined,
     resetEpoch: reset ? Number(reset) : undefined,
   };
 }
@@ -34,7 +35,10 @@ export function mergeRateMeta(a: SmmoRateMeta, b: SmmoRateMeta): SmmoRateMeta {
 }
 
 /** GET JSON from SMMO; throws on transport/HTTP errors with a readable message. */
-export async function smmoFetchJson<T = unknown>(apiKey: string, path: string): Promise<{ json: T; rate: SmmoRateMeta }> {
+export async function smmoFetchJson<T = unknown>(
+  apiKey: string,
+  path: string,
+): Promise<{ json: T; rate: SmmoRateMeta }> {
   const rel = path.startsWith("/") ? path : `/${path}`;
   const url = `${SMMO_API_BASE}${rel}`;
   const res = await fetch(url, {
@@ -50,7 +54,9 @@ export async function smmoFetchJson<T = unknown>(apiKey: string, path: string): 
   try {
     json = (text ? JSON.parse(text) : {}) as T;
   } catch {
-    throw new Error(`SMMO API returned non-JSON (HTTP ${res.status}): ${text.slice(0, 240)}`);
+    throw new Error(
+      `SMMO API returned non-JSON (HTTP ${res.status}): ${text.slice(0, 240)}`,
+    );
   }
   if (!res.ok) {
     const body = json as { message?: string; error?: string };
@@ -108,7 +114,8 @@ export function normalizeEquipmentSlot(slotLabel: string): string {
   };
   if (aliases[s]) return aliases[s];
   if (s.includes("wood") && s.includes("axe")) return "wood_axe";
-  if (s.includes("fishing") || (s.includes("rod") && !s.includes("arrow"))) return "fishing_rod";
+  if (s.includes("fishing") || (s.includes("rod") && !s.includes("arrow")))
+    return "fishing_rod";
   if (s.includes("pickaxe")) return "pickaxe";
   if (s.includes("shovel")) return "shovel";
   return s || "special";
@@ -135,14 +142,18 @@ function modifierValue(mod: unknown): number | undefined {
 }
 
 /** Map item stat1/2/3 + modifiers into str/def bonus fields used by the UI. */
-export function itemStatBonuses(item: Record<string, unknown>): { strBonus?: number; defBonus?: number } {
+export function itemStatBonuses(item: Record<string, unknown>): {
+  strBonus?: number;
+  defBonus?: number;
+} {
   const out: { strBonus?: number; defBonus?: number } = {};
   const apply = (stat: unknown, mod: unknown) => {
     const value = modifierValue(mod);
     if (value === undefined) return;
     const k = statKey(stat);
     if (k.includes("str") || k === "strength") out.strBonus = value;
-    else if (k.includes("def") || k === "defence" || k === "defense") out.defBonus = value;
+    else if (k.includes("def") || k === "defence" || k === "defense")
+      out.defBonus = value;
   };
   apply(item.stat1, item.stat1modifier);
   apply(item.stat2, item.stat2modifier);

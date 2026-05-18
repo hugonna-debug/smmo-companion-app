@@ -1,16 +1,16 @@
 import { useMutation, useQuery } from "convex/react";
 import {
-  Trophy,
   Check,
-  Lock,
   ChevronDown,
   ChevronRight,
+  Lock,
   Package,
+  Trophy,
 } from "lucide-react";
 import { useState } from "react";
-import { api } from "../../convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { api } from "../../convex/_generated/api";
 
 // Real SMMO collection categories from video (frame 99)
 const CATEGORIES = [
@@ -70,12 +70,21 @@ export function CollectionPage() {
   // Tracked items from database
   const byCat: Record<string, typeof collection> = {};
   for (const cat of CATEGORIES.filter(c => c.key !== "all")) {
-    byCat[cat.key] = collection.filter((c) => c.category === cat.key);
+    byCat[cat.key] = collection.filter(c => c.category === cat.key);
   }
 
-  const filtered = activeCategory === "all" ? collection : byCat[activeCategory] || [];
+  const filtered =
+    activeCategory === "all" ? collection : byCat[activeCategory] || [];
 
-  const rarityOrder = ["celestial", "legendary", "exotic", "elite", "rare", "uncommon", "common"];
+  const rarityOrder = [
+    "celestial",
+    "legendary",
+    "exotic",
+    "elite",
+    "rare",
+    "uncommon",
+    "common",
+  ];
   const sorted = [...filtered].sort((a, b) => {
     if (a.isOwned !== b.isOwned) return a.isOwned ? -1 : 1;
     const aR = rarityOrder.indexOf(a.rarity || "common");
@@ -85,9 +94,16 @@ export function CollectionPage() {
 
   // Total counts from real game
   const totalCategories = CATEGORIES.filter(c => c.key !== "all");
-  const overallOwned = totalCategories.reduce((sum, c) => sum + (CHEST_PROGRESS[c.key]?.current || 0), 0);
-  const overallTotal = totalCategories.reduce((sum, c) => sum + (CHEST_PROGRESS[c.key]?.target || 0), 0);
-  const overallPct = overallTotal > 0 ? Math.round((overallOwned / overallTotal) * 100) : 0;
+  const overallOwned = totalCategories.reduce(
+    (sum, c) => sum + (CHEST_PROGRESS[c.key]?.current || 0),
+    0,
+  );
+  const overallTotal = totalCategories.reduce(
+    (sum, c) => sum + (CHEST_PROGRESS[c.key]?.target || 0),
+    0,
+  );
+  const overallPct =
+    overallTotal > 0 ? Math.round((overallOwned / overallTotal) * 100) : 0;
 
   return (
     <div className="p-3 md:p-4 space-y-3 max-w-4xl">
@@ -97,18 +113,22 @@ export function CollectionPage() {
           <Trophy className="size-5 text-gold-accent" />
           <h1 className="text-lg font-bold">Your Collection</h1>
         </div>
-        <Badge variant="outline" className="text-[10px] border-gold-accent/30 text-gold-accent">
+        <Badge
+          variant="outline"
+          className="text-[10px] border-gold-accent/30 text-gold-accent"
+        >
           {overallOwned.toLocaleString()} collected
         </Badge>
       </div>
 
       {/* Category Grid (matching real SMMO Your Collection screen) */}
       <div className="game-card space-y-1">
-        {totalCategories.map((cat) => {
+        {totalCategories.map(cat => {
           const progress = CHEST_PROGRESS[cat.key];
-          const pct = progress && progress.target > 0
-            ? Math.round((progress.current / progress.target) * 100)
-            : 0;
+          const pct =
+            progress && progress.target > 0
+              ? Math.round((progress.current / progress.target) * 100)
+              : 0;
           const isExpanded = expandedCat === cat.key;
           const catItems = byCat[cat.key] || [];
           const isActive = activeCategory === cat.key;
@@ -122,7 +142,9 @@ export function CollectionPage() {
                   setExpandedCat(isExpanded ? null : cat.key);
                 }}
                 className={`w-full flex items-center justify-between p-3 rounded-lg transition-all hover:bg-secondary/40 ${
-                  isActive ? "bg-primary/5 border border-primary/20" : "border border-transparent"
+                  isActive
+                    ? "bg-primary/5 border border-primary/20"
+                    : "border border-transparent"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -148,18 +170,26 @@ export function CollectionPage() {
                   <div className="game-card bg-secondary/20">
                     <div className="flex items-center gap-2 mb-1.5">
                       <Package className="size-3.5 text-gold-accent" />
-                      <span className="text-xs font-semibold text-gold-dim">Chest Progress</span>
+                      <span className="text-xs font-semibold text-gold-dim">
+                        Chest Progress
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold">
                         {progress.current.toLocaleString()}{" "}
-                        <span className="text-muted-foreground font-normal">/ {progress.target.toLocaleString()}</span>
+                        <span className="text-muted-foreground font-normal">
+                          / {progress.target.toLocaleString()}
+                        </span>
                       </span>
-                      <span className="text-xs font-mono text-primary">{pct}%</span>
+                      <span className="text-xs font-mono text-primary">
+                        {pct}%
+                      </span>
                     </div>
                     <Progress value={pct} className="h-2 mt-1.5" />
                     {pct >= 100 && (
-                      <p className="text-[10px] text-success mt-1">✅ Chest unlocked! View Chest</p>
+                      <p className="text-[10px] text-success mt-1">
+                        ✅ Chest unlocked! View Chest
+                      </p>
                     )}
                   </div>
 
@@ -169,8 +199,12 @@ export function CollectionPage() {
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1">
                         Tracked Items ({catItems.length})
                       </p>
-                      {catItems.map((item) => (
-                        <CollectionItem key={item._id} item={item} onToggle={() => toggleOwned({ itemId: item._id })} />
+                      {catItems.map(item => (
+                        <CollectionItem
+                          key={item._id}
+                          item={item}
+                          onToggle={() => toggleOwned({ itemId: item._id })}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -206,8 +240,12 @@ export function CollectionPage() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1">
             All Tracked Items ({sorted.length})
           </p>
-          {sorted.map((item) => (
-            <CollectionItem key={item._id} item={item} onToggle={() => toggleOwned({ itemId: item._id })} />
+          {sorted.map(item => (
+            <CollectionItem
+              key={item._id}
+              item={item}
+              onToggle={() => toggleOwned({ itemId: item._id })}
+            />
           ))}
         </div>
       )}
@@ -250,9 +288,7 @@ function CollectionItem({
         type="button"
         onClick={onToggle}
         className={`size-8 rounded-md flex items-center justify-center shrink-0 transition-all ${
-          item.isOwned
-            ? "bg-primary/15"
-            : "bg-muted/20 hover:bg-primary/10"
+          item.isOwned ? "bg-primary/15" : "bg-muted/20 hover:bg-primary/10"
         }`}
       >
         {item.isOwned ? (
@@ -265,21 +301,27 @@ function CollectionItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-xs">{catInfo?.emoji || "📦"}</span>
-          <span className={`text-[12px] font-semibold truncate ${
-            item.isOwned ? RARITY_COLORS[rarity] : "text-muted-foreground"
-          }`}>
+          <span
+            className={`text-[12px] font-semibold truncate ${
+              item.isOwned ? RARITY_COLORS[rarity] : "text-muted-foreground"
+            }`}
+          >
             {item.itemName}
           </span>
         </div>
         <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-          <span className={`capitalize ${RARITY_COLORS[rarity]}`}>{rarity}</span>
+          <span className={`capitalize ${RARITY_COLORS[rarity]}`}>
+            {rarity}
+          </span>
           {item.source && <span>· {item.source}</span>}
           {item.obtainedAt && (
             <span>· {new Date(item.obtainedAt).toLocaleDateString()}</span>
           )}
         </div>
         {item.notes && (
-          <p className="text-[9px] text-muted-foreground/60 italic mt-0.5">{item.notes}</p>
+          <p className="text-[9px] text-muted-foreground/60 italic mt-0.5">
+            {item.notes}
+          </p>
         )}
       </div>
     </div>
@@ -294,7 +336,10 @@ function CollectionSkeleton() {
       </div>
       <div className="game-card space-y-2">
         {[...Array(8)].map((_, i) => (
-          <div key={`cskel-${i}`} className="h-12 rounded-lg bg-muted/30 animate-pulse" />
+          <div
+            key={`cskel-${i}`}
+            className="h-12 rounded-lg bg-muted/30 animate-pulse"
+          />
         ))}
       </div>
     </div>

@@ -1,24 +1,24 @@
 import { useMutation, useQuery } from "convex/react";
 import {
-  Lock,
-  Check,
-  Copy,
-  Clock,
-  Gift,
-  Coins,
-  Sparkles,
-  Gem,
-  Zap,
-  Package,
   AlertTriangle,
-  Trash2,
+  Check,
+  Clock,
+  Coins,
+  Copy,
   ExternalLink,
+  Gem,
+  Gift,
+  Lock,
+  Package,
+  Sparkles,
+  Trash2,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
-import { api } from "../../convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTimeRemaining } from "@/lib/gameUtils";
+import { api } from "../../convex/_generated/api";
 
 type VaultFilter = "all" | "active" | "redeemed" | "expired";
 
@@ -48,22 +48,38 @@ export function VaultPage() {
   }
 
   const now = Date.now();
-  const active = codes.filter((c) => !c.isRedeemed && (!c.expiresAt || c.expiresAt > now));
-  const redeemed = codes.filter((c) => c.isRedeemed);
-  const expired = codes.filter((c) => !c.isRedeemed && c.expiresAt && c.expiresAt <= now);
+  const active = codes.filter(
+    c => !c.isRedeemed && (!c.expiresAt || c.expiresAt > now),
+  );
+  const redeemed = codes.filter(c => c.isRedeemed);
+  const expired = codes.filter(
+    c => !c.isRedeemed && c.expiresAt && c.expiresAt <= now,
+  );
 
   const filteredCodes =
-    filter === "active" ? active :
-    filter === "redeemed" ? redeemed :
-    filter === "expired" ? expired :
-    codes;
+    filter === "active"
+      ? active
+      : filter === "redeemed"
+        ? redeemed
+        : filter === "expired"
+          ? expired
+          : codes;
 
   // Sort: active first (by expiry soonest), then redeemed (newest first), then expired
   const sorted = [...filteredCodes].sort((a, b) => {
-    const aStatus = a.isRedeemed ? 2 : (a.expiresAt && a.expiresAt <= now) ? 3 : 1;
-    const bStatus = b.isRedeemed ? 2 : (b.expiresAt && b.expiresAt <= now) ? 3 : 1;
+    const aStatus = a.isRedeemed
+      ? 2
+      : a.expiresAt && a.expiresAt <= now
+        ? 3
+        : 1;
+    const bStatus = b.isRedeemed
+      ? 2
+      : b.expiresAt && b.expiresAt <= now
+        ? 3
+        : 1;
     if (aStatus !== bStatus) return aStatus - bStatus;
-    if (aStatus === 1 && a.expiresAt && b.expiresAt) return a.expiresAt - b.expiresAt;
+    if (aStatus === 1 && a.expiresAt && b.expiresAt)
+      return a.expiresAt - b.expiresAt;
     return b.addedAt - a.addedAt;
   });
 
@@ -82,10 +98,16 @@ export function VaultPage() {
           <h1 className="text-lg font-bold">Vault</h1>
         </div>
         <div className="flex items-center gap-1.5">
-          <Badge variant="outline" className="text-[10px] border-success/30 text-success">
+          <Badge
+            variant="outline"
+            className="text-[10px] border-success/30 text-success"
+          >
             {active.length} active
           </Badge>
-          <Badge variant="outline" className="text-[10px] border-muted-foreground/30">
+          <Badge
+            variant="outline"
+            className="text-[10px] border-muted-foreground/30"
+          >
             {redeemed.length} redeemed
           </Badge>
         </div>
@@ -98,7 +120,8 @@ export function VaultPage() {
           <div>
             <p className="text-sm font-semibold">Simple Wolf Codes</p>
             <p className="text-[10px] text-muted-foreground">
-              Vault codes from Simple Wolf and the SMMO community. Copy → paste into game vault.
+              Vault codes from Simple Wolf and the SMMO community. Copy → paste
+              into game vault.
             </p>
           </div>
         </div>
@@ -106,18 +129,29 @@ export function VaultPage() {
 
       {/* Filter tabs */}
       <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
-        {(["all", "active", "redeemed", "expired"] as const).map((f) => {
-          const count = f === "all" ? codes.length : f === "active" ? active.length : f === "redeemed" ? redeemed.length : expired.length;
+        {(["all", "active", "redeemed", "expired"] as const).map(f => {
+          const count =
+            f === "all"
+              ? codes.length
+              : f === "active"
+                ? active.length
+                : f === "redeemed"
+                  ? redeemed.length
+                  : expired.length;
           return (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
               className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
-                filter === f ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                filter === f
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground"
               }`}
             >
-              {f === "all" ? `All (${count})` : `${f.charAt(0).toUpperCase() + f.slice(1)} (${count})`}
+              {f === "all"
+                ? `All (${count})`
+                : `${f.charAt(0).toUpperCase() + f.slice(1)} (${count})`}
             </button>
           );
         })}
@@ -127,28 +161,44 @@ export function VaultPage() {
       {sorted.length === 0 ? (
         <div className="game-card text-center py-8">
           <Lock className="size-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">No codes in this category</p>
+          <p className="text-sm text-muted-foreground">
+            No codes in this category
+          </p>
         </div>
       ) : (
         <div className="space-y-1.5">
-          {sorted.map((code) => {
-            const isExp = !code.isRedeemed && code.expiresAt && code.expiresAt <= now;
-            const isExpiringSoon = !code.isRedeemed && code.expiresAt && code.expiresAt > now && (code.expiresAt - now) < 86400000 * 2;
+          {sorted.map(code => {
+            const isExp =
+              !code.isRedeemed && code.expiresAt && code.expiresAt <= now;
+            const isExpiringSoon =
+              !code.isRedeemed &&
+              code.expiresAt &&
+              code.expiresAt > now &&
+              code.expiresAt - now < 86400000 * 2;
 
             return (
               <div
                 key={code._id}
                 className={`game-card ${
-                  code.isRedeemed ? "opacity-50" :
-                  isExp ? "opacity-40 border-destructive/20" :
-                  isExpiringSoon ? "border-warning/30" :
-                  "border-chart-3/20"
+                  code.isRedeemed
+                    ? "opacity-50"
+                    : isExp
+                      ? "opacity-40 border-destructive/20"
+                      : isExpiringSoon
+                        ? "border-warning/30"
+                        : "border-chart-3/20"
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`size-9 rounded-lg flex items-center justify-center shrink-0 ${
-                    code.isRedeemed ? "bg-success/10" : isExp ? "bg-destructive/10" : "bg-chart-3/10"
-                  }`}>
+                  <div
+                    className={`size-9 rounded-lg flex items-center justify-center shrink-0 ${
+                      code.isRedeemed
+                        ? "bg-success/10"
+                        : isExp
+                          ? "bg-destructive/10"
+                          : "bg-chart-3/10"
+                    }`}
+                  >
                     {code.isRedeemed ? (
                       <Check className="size-4 text-success" />
                     ) : isExp ? (
@@ -182,8 +232,12 @@ export function VaultPage() {
                     {/* Reward */}
                     {code.reward && (
                       <div className="flex items-center gap-1.5 mt-1">
-                        {REWARD_ICONS[code.rewardType || "item"] || <Gift className="size-3.5" />}
-                        <span className="text-[11px] text-foreground/80">{code.reward}</span>
+                        {REWARD_ICONS[code.rewardType || "item"] || (
+                          <Gift className="size-3.5" />
+                        )}
+                        <span className="text-[11px] text-foreground/80">
+                          {code.reward}
+                        </span>
                       </div>
                     )}
 
@@ -191,20 +245,29 @@ export function VaultPage() {
                     <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground flex-wrap">
                       <span>{SOURCE_LABELS[code.source] || code.source}</span>
                       {code.expiresAt && !code.isRedeemed && !isExp && (
-                        <span className={isExpiringSoon ? "text-warning font-medium" : ""}>
+                        <span
+                          className={
+                            isExpiringSoon ? "text-warning font-medium" : ""
+                          }
+                        >
                           ⏰ {formatTimeRemaining(code.expiresAt)}
                         </span>
                       )}
-                      {isExp && <span className="text-destructive">Expired</span>}
+                      {isExp && (
+                        <span className="text-destructive">Expired</span>
+                      )}
                       {code.isRedeemed && code.redeemedAt && (
                         <span className="text-success">
-                          ✓ Redeemed {new Date(code.redeemedAt).toLocaleDateString()}
+                          ✓ Redeemed{" "}
+                          {new Date(code.redeemedAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
 
                     {code.notes && (
-                      <p className="text-[10px] text-muted-foreground/70 mt-1 italic">{code.notes}</p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1 italic">
+                        {code.notes}
+                      </p>
                     )}
 
                     {isExpiringSoon && !code.isRedeemed && (
@@ -226,7 +289,11 @@ export function VaultPage() {
                             ? "bg-muted/50 text-muted-foreground hover:bg-muted"
                             : "bg-success/10 text-success hover:bg-success/20"
                         }`}
-                        title={code.isRedeemed ? "Mark as not redeemed" : "Mark as redeemed"}
+                        title={
+                          code.isRedeemed
+                            ? "Mark as not redeemed"
+                            : "Mark as redeemed"
+                        }
                       >
                         <Check className="size-3.5" />
                       </button>
@@ -255,7 +322,11 @@ export function VaultPage() {
             Check Simple Wolf's latest posts for new vault codes
           </p>
         </div>
-        <Button variant="outline" size="sm" className="text-[10px] h-7 border-primary/30 text-primary">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-[10px] h-7 border-primary/30 text-primary"
+        >
           <ExternalLink className="size-3" />
           Simple Wolf
         </Button>

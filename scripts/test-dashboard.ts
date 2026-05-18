@@ -1,6 +1,6 @@
 import { runTest } from "./auth";
 
-runTest("SMMO Companion - Full App Test", async (helper) => {
+runTest("SMMO Companion - Full App Test", async helper => {
   const { page } = helper;
 
   // Should start authenticated on root, which should redirect to dashboard or landing

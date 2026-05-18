@@ -1,23 +1,44 @@
 import { useMutation, useQuery } from "convex/react";
 import {
-  Brain,
-  Send,
-  Trash2,
-  Sparkles,
-  User,
   Bot,
+  Brain,
   Loader2,
+  Send,
+  Sparkles,
+  Trash2,
+  User,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { api } from "../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { api } from "../../convex/_generated/api";
 
 const QUICK_PROMPTS = [
-  { label: "Build Advice", icon: "⚔️", category: "build", prompt: "Analyze my current build and suggest stat allocation priorities." },
-  { label: "War Strategy", icon: "🏰", category: "war", prompt: "What's the best PvP strategy for The Deers given our current wars?" },
-  { label: "Market Tips", icon: "💰", category: "market", prompt: "Which items should I buy or sell based on current market trends?" },
-  { label: "Daily Plan", icon: "📋", category: "general", prompt: "Create an optimal daily routine for maximizing my progression." },
+  {
+    label: "Build Advice",
+    icon: "⚔️",
+    category: "build",
+    prompt: "Analyze my current build and suggest stat allocation priorities.",
+  },
+  {
+    label: "War Strategy",
+    icon: "🏰",
+    category: "war",
+    prompt:
+      "What's the best PvP strategy for The Deers given our current wars?",
+  },
+  {
+    label: "Market Tips",
+    icon: "💰",
+    category: "market",
+    prompt: "Which items should I buy or sell based on current market trends?",
+  },
+  {
+    label: "Daily Plan",
+    icon: "📋",
+    category: "general",
+    prompt: "Create an optimal daily routine for maximizing my progression.",
+  },
 ];
 
 export function AiAdvisorPage() {
@@ -79,18 +100,25 @@ export function AiAdvisorPage() {
     );
   }
 
-  const chatMessages = messages.filter(m => m.role !== "system")
+  const chatMessages = messages
+    .filter(m => m.role !== "system")
     .sort((a, b) => a.timestamp - b.timestamp);
   const systemMsg = messages.find(m => m.role === "system");
 
   return (
-    <div className="p-3 md:p-4 space-y-3 max-w-4xl flex flex-col" style={{ minHeight: "calc(100vh - 120px)" }}>
+    <div
+      className="p-3 md:p-4 space-y-3 max-w-4xl flex flex-col"
+      style={{ minHeight: "calc(100vh - 120px)" }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Brain className="size-5 text-chart-5" />
           <h1 className="text-lg font-bold">AI Advisor</h1>
-          <Badge variant="outline" className="text-[9px] border-chart-5/30 text-chart-5">
+          <Badge
+            variant="outline"
+            className="text-[9px] border-chart-5/30 text-chart-5"
+          >
             <Sparkles className="size-2.5 mr-0.5" />
             Gemini + GPT
           </Badge>
@@ -113,7 +141,9 @@ export function AiAdvisorPage() {
         <div className="game-card bg-chart-5/5 border-chart-5/20">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="size-3 text-chart-5" />
-            <span className="text-[10px] text-chart-5 font-medium uppercase tracking-wider">Advisor Context</span>
+            <span className="text-[10px] text-chart-5 font-medium uppercase tracking-wider">
+              Advisor Context
+            </span>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap">
             <span>⚔ STR {(player.totalStr ?? 0).toLocaleString()}</span>
@@ -130,7 +160,7 @@ export function AiAdvisorPage() {
         <div className="space-y-2">
           <p className="text-[11px] text-muted-foreground">Quick questions:</p>
           <div className="grid grid-cols-2 gap-1.5">
-            {QUICK_PROMPTS.map((qp) => (
+            {QUICK_PROMPTS.map(qp => (
               <button
                 key={qp.label}
                 type="button"
@@ -144,7 +174,9 @@ export function AiAdvisorPage() {
                   <span className="text-lg">{qp.icon}</span>
                   <div>
                     <p className="text-xs font-medium">{qp.label}</p>
-                    <p className="text-[10px] text-muted-foreground line-clamp-1">{qp.prompt}</p>
+                    <p className="text-[10px] text-muted-foreground line-clamp-1">
+                      {qp.prompt}
+                    </p>
                   </div>
                 </div>
               </button>
@@ -162,7 +194,7 @@ export function AiAdvisorPage() {
           </div>
         )}
 
-        {chatMessages.map((msg) => (
+        {chatMessages.map(msg => (
           <div
             key={msg._id}
             className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
@@ -179,18 +211,29 @@ export function AiAdvisorPage() {
                   : "bg-secondary/80 border border-border"
               }`}
             >
-              <p className="text-xs whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+              <p className="text-xs whitespace-pre-wrap leading-relaxed">
+                {msg.content}
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 {msg.category && msg.category !== "general" && (
-                  <Badge variant="outline" className={`text-[8px] h-4 ${
-                    msg.role === "user" ? "border-primary-foreground/30 text-primary-foreground/70" : "border-border"
-                  }`}>
+                  <Badge
+                    variant="outline"
+                    className={`text-[8px] h-4 ${
+                      msg.role === "user"
+                        ? "border-primary-foreground/30 text-primary-foreground/70"
+                        : "border-border"
+                    }`}
+                  >
                     {getCategoryIcon(msg.category)} {msg.category}
                   </Badge>
                 )}
-                <span className={`text-[9px] ${
-                  msg.role === "user" ? "text-primary-foreground/50" : "text-muted-foreground/50"
-                }`}>
+                <span
+                  className={`text-[9px] ${
+                    msg.role === "user"
+                      ? "text-primary-foreground/50"
+                      : "text-muted-foreground/50"
+                  }`}
+                >
                   {formatTime(msg.timestamp)}
                 </span>
               </div>
@@ -211,7 +254,9 @@ export function AiAdvisorPage() {
             <div className="bg-secondary/80 border border-border rounded-xl px-3 py-2">
               <div className="flex items-center gap-1.5">
                 <Loader2 className="size-3 text-chart-5 animate-spin" />
-                <span className="text-[11px] text-muted-foreground">Analyzing your stats...</span>
+                <span className="text-[11px] text-muted-foreground">
+                  Analyzing your stats...
+                </span>
               </div>
             </div>
           </div>
@@ -227,7 +272,7 @@ export function AiAdvisorPage() {
           { key: "build", label: "Build", icon: "⚔️" },
           { key: "war", label: "War", icon: "🏰" },
           { key: "market", label: "Market", icon: "💰" },
-        ].map((cat) => (
+        ].map(cat => (
           <button
             key={cat.label}
             type="button"
@@ -248,7 +293,7 @@ export function AiAdvisorPage() {
         <div className="flex-1 relative">
           <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask the AI advisor anything about your SMMO strategy..."
             rows={1}
@@ -280,17 +325,26 @@ function formatTime(timestamp: number): string {
 
 function getCategoryIcon(category: string): string {
   switch (category) {
-    case "build": return "⚔️";
-    case "war": return "🏰";
-    case "market": return "💰";
-    default: return "💬";
+    case "build":
+      return "⚔️";
+    case "war":
+      return "🏰";
+    case "market":
+      return "💰";
+    default:
+      return "💬";
   }
 }
 
 function generateMockResponse(question: string, player: any): string {
   const q = question.toLowerCase();
 
-  if (q.includes("build") || q.includes("stat") || q.includes("str") || q.includes("dex")) {
+  if (
+    q.includes("build") ||
+    q.includes("stat") ||
+    q.includes("str") ||
+    q.includes("dex")
+  ) {
     return `Based on your current stats (${(player?.totalStr ?? 52400).toLocaleString()} STR, ${player?.totalDef ?? 5} DEF, ${(player?.totalDex ?? 6950).toLocaleString()} DEX):\n\n**Recommendation:**\n• Your STR is in the Top 0.57% — incredible for a Warrior build\n• DEF at 5 is a full glass cannon. Consider investing 200-500 points for survivability\n• DEX at 6,950 gives solid dodge — keep building this after hitting 55K STR\n\n**Priority:** STR to 55K → DEX to 8K → DEF to 500\n\nYour spATK +107% with Mortem worship is optimal for your build.`;
   }
 
@@ -298,7 +352,12 @@ function generateMockResponse(question: string, player: any): string {
     return `**War Strategy for The Deers:**\n\n1. **Priority Targets:** Focus on Dark Knights (2,341 vs 1,876) — we're ahead, push the lead\n2. **Cult of Cthulhu** (1,567 vs 1,890) — we're behind, rally guild members\n3. **Shadow Realm** (3,421 vs 3,398) — razor thin margin, this is the decisive war\n\n**Your Role:** With 52.4K STR, target their members with <40K STR for reliable kills. Avoid safe mode players.\n\n**Rate Limit:** Stay under 40 req/min to avoid API throttling.`;
   }
 
-  if (q.includes("market") || q.includes("buy") || q.includes("sell") || q.includes("price")) {
+  if (
+    q.includes("market") ||
+    q.includes("buy") ||
+    q.includes("sell") ||
+    q.includes("price")
+  ) {
     return `**Market Analysis:**\n\n📈 **Rising:** The Stick (+8.3% this week) — good to hold\n📈 **Rising:** Emeris (+7.4%) — extremely rare, only 8 in circulation\n📉 **Dipping:** Dragon King Shield (-6.5%) — potential buy opportunity below 250M\n\n**Tip:** Your Damaged Archdemon Amulet (Str) is trending up. Consider buying a second one for storage.\n\n**Diamond Market:** Best rate is 15M/diamond from DiamondDealer. Consider stocking up.`;
   }
 

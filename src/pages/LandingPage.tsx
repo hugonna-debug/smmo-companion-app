@@ -1,5 +1,13 @@
 import { useConvexAuth } from "convex/react";
-import { ArrowRight, Eye, Shield, Swords, Timer, Brain, Lock } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  Eye,
+  Lock,
+  Shield,
+  Swords,
+  Timer,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -27,13 +35,18 @@ export function LandingPage() {
           </h1>
 
           <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
-            Your strategic advisor for SimpleMMO. Dual-AI powered insights, Guild PvP tools,
-            buff tracking, and equipment analysis — all read-only, all compliant.
+            Your strategic advisor for SimpleMMO. Dual-AI powered insights,
+            Guild PvP tools, buff tracking, and equipment analysis — all
+            read-only, all compliant.
           </p>
 
           {!isAuthenticated && !isLoading && (
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-              <Button size="lg" className="text-sm h-10 px-5 bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+              <Button
+                size="lg"
+                className="text-sm h-10 px-5 bg-primary text-primary-foreground hover:bg-primary/90"
+                asChild
+              >
                 <Link to="/signup">
                   Enter the Realm
                   <ArrowRight className="size-4" />
@@ -51,7 +64,11 @@ export function LandingPage() {
           )}
           {isAuthenticated && (
             <div className="pt-2">
-              <Button size="lg" className="text-sm h-10 px-5 bg-primary text-primary-foreground" asChild>
+              <Button
+                size="lg"
+                className="text-sm h-10 px-5 bg-primary text-primary-foreground"
+                asChild
+              >
                 <Link to="/dashboard">
                   Go to Dashboard
                   <ArrowRight className="size-4" />
@@ -106,9 +123,18 @@ export function LandingPage() {
               color="chart-5"
             />
             <div className="rounded-lg bg-primary/10 border border-primary/20 p-4 flex flex-col justify-center">
-              <p className="font-semibold text-sm text-primary mb-1">Ready to start?</p>
-              <p className="text-[11px] text-muted-foreground mb-2">Join and connect your API key</p>
-              <Button size="sm" variant="outline" className="text-xs border-primary/30 text-primary hover:bg-primary/10 w-fit" asChild>
+              <p className="font-semibold text-sm text-primary mb-1">
+                Ready to start?
+              </p>
+              <p className="text-[11px] text-muted-foreground mb-2">
+                Join and connect your API key
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs border-primary/30 text-primary hover:bg-primary/10 w-fit"
+                asChild
+              >
                 <Link to="/signup">
                   Get Started <ArrowRight className="size-3" />
                 </Link>
@@ -133,12 +159,18 @@ function FeatureCard({
   color: string;
 }) {
   return (
-    <div className={`group rounded-lg bg-card border p-4 transition-all hover:border-${color}/30`}>
-      <div className={`inline-flex size-8 items-center justify-center rounded-md bg-${color}/10 mb-3`}>
+    <div
+      className={`group rounded-lg bg-card border p-4 transition-all hover:border-${color}/30`}
+    >
+      <div
+        className={`inline-flex size-8 items-center justify-center rounded-md bg-${color}/10 mb-3`}
+      >
         {icon}
       </div>
       <h3 className="font-semibold text-sm mb-1">{title}</h3>
-      <p className="text-muted-foreground text-[11px] leading-relaxed">{description}</p>
+      <p className="text-muted-foreground text-[11px] leading-relaxed">
+        {description}
+      </p>
     </div>
   );
 }

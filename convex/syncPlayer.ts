@@ -1,25 +1,26 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { GenericActionCtx } from "convex/server";
 import { v } from "convex/values";
-import type { DataModel, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import type { DataModel, Id } from "./_generated/dataModel";
+import { action, internalMutation, internalQuery } from "./_generated/server";
 import {
   buildItemDisplayName,
-  itemStatBonuses,
   isSmmoNotFoundError,
+  itemStatBonuses,
   mergeRateMeta,
   normalizeEquipmentSlot,
-  smmoFetchJson,
   type SmmoRateMeta,
+  smmoFetchJson,
 } from "./smmoApi";
-import { action, internalMutation, internalQuery } from "./_generated/server";
 
 const RATE_WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 40;
 
 function n(x: unknown, d = 0): number {
   if (typeof x === "number" && !Number.isNaN(x)) return x;
-  if (typeof x === "string" && x !== "" && !Number.isNaN(Number(x))) return Number(x);
+  if (typeof x === "string" && x !== "" && !Number.isNaN(Number(x)))
+    return Number(x);
   return d;
 }
 
@@ -27,7 +28,8 @@ function n(x: unknown, d = 0): number {
 function optN(x: unknown): number | undefined {
   if (x === undefined || x === null) return undefined;
   if (typeof x === "number" && !Number.isNaN(x)) return x;
-  if (typeof x === "string" && x !== "" && !Number.isNaN(Number(x))) return Number(x);
+  if (typeof x === "string" && x !== "" && !Number.isNaN(Number(x)))
+    return Number(x);
   return undefined;
 }
 
@@ -37,9 +39,14 @@ function buildMergedPlayerDoc(
   now: number,
 ): Record<string, unknown> {
   const guild = (v1?.guild ?? null) as { id?: number; name?: string } | null;
-  const loc1 = v1?.current_location as { id?: number; name?: string } | undefined;
+  const loc1 = v1?.current_location as
+    | { id?: number; name?: string }
+    | undefined;
   const loc2 = v2?.location as { id?: number; name?: string } | undefined;
-  const currencies = (v2?.currencies ?? {}) as { gold?: number; diamonds?: number };
+  const currencies = (v2?.currencies ?? {}) as {
+    gold?: number;
+    diamonds?: number;
+  };
   const stats = (v2?.stats ?? {}) as {
     core?: { str?: number; def?: number; dex?: number };
     equipment?: { str?: number; def?: number; dex?: number };
@@ -78,7 +85,8 @@ function buildMergedPlayerDoc(
     expToNextLevel: expTo,
     gold: n(currencies.gold, n(v1?.gold)),
     bank: optN(v1Any?.bank),
-    diamonds: currencies.diamonds !== undefined ? n(currencies.diamonds) : undefined,
+    diamonds:
+      currencies.diamonds !== undefined ? n(currencies.diamonds) : undefined,
     steps: n(v1?.steps),
     npcKills: n(v1?.npc_kills),
     pvpKills: n(v1?.user_kills),
@@ -120,8 +128,10 @@ function buildMergedPlayerDoc(
     totalDef: stats.total?.def,
     totalDex: stats.total?.dex,
     title: typeof v1Any?.title === "string" ? v1Any.title : undefined,
-    playerClass: typeof v1Any?.player_class === "string" ? v1Any.player_class : undefined,
-    joinDate: typeof v1Any?.join_date === "string" ? v1Any.join_date : undefined,
+    playerClass:
+      typeof v1Any?.player_class === "string" ? v1Any.player_class : undefined,
+    joinDate:
+      typeof v1Any?.join_date === "string" ? v1Any.join_date : undefined,
     locationId: loc2?.id ?? loc1?.id,
     locationName:
       (typeof loc2?.name === "string" ? loc2.name : undefined) ??
@@ -140,7 +150,9 @@ function unwrapSkillsArray(raw: unknown): unknown {
   return raw;
 }
 
-function parseSkillsPayload(raw: unknown): Array<{ skill: string; level: number; exp: number }> {
+function parseSkillsPayload(
+  raw: unknown,
+): Array<{ skill: string; level: number; exp: number }> {
   raw = unwrapSkillsArray(raw);
   if (!Array.isArray(raw)) return [];
   const out: Array<{ skill: string; level: number; exp: number }> = [];
@@ -180,7 +192,7 @@ export const internalGetApiKeysRow = internalQuery({
   handler: async (ctx, { userId }) => {
     return await ctx.db
       .query("apiKeys")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
   },
 });
@@ -191,11 +203,13 @@ export const internalReserveSmmoRequest = internalMutation({
   handler: async (ctx, { userId }) => {
     const row = await ctx.db
       .query("apiKeys")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
     if (!row) return null;
     const now = Date.now();
-    const log = (row.smmoRequestLog ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+    const log = (row.smmoRequestLog ?? []).filter(
+      t => now - t < RATE_WINDOW_MS,
+    );
     if (log.length >= MAX_REQUESTS_PER_WINDOW) {
       throw new Error(
         "Local rate limit: at most 40 SimpleMMO API requests per minute. Try again in a moment.",
@@ -212,10 +226,10 @@ export const internalReleaseSmmoRequest = internalMutation({
   handler: async (ctx, { userId, reservedAt }) => {
     const row = await ctx.db
       .query("apiKeys")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
     if (!row) return null;
-    const log = (row.smmoRequestLog ?? []).filter((t) => t !== reservedAt);
+    const log = (row.smmoRequestLog ?? []).filter(t => t !== reservedAt);
     await ctx.db.patch(row._id, { smmoRequestLog: log });
     return null;
   },
@@ -235,7 +249,7 @@ export const internalUpsertApiKeys = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("apiKeys")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
       .unique();
     const ratePatch = {
       rateLimitRemaining: args.rateLimitRemaining,
@@ -247,7 +261,9 @@ export const internalUpsertApiKeys = internalMutation({
         smmoPlayerId: args.smmoPlayerId,
         lastValidated: args.lastValidated,
         lastSyncError: undefined,
-        ...(args.smmoRequestLog !== undefined ? { smmoRequestLog: args.smmoRequestLog } : {}),
+        ...(args.smmoRequestLog !== undefined
+          ? { smmoRequestLog: args.smmoRequestLog }
+          : {}),
         ...ratePatch,
       });
     } else {
@@ -274,7 +290,7 @@ export const internalPatchApiKeyRateMeta = internalMutation({
   handler: async (ctx, args) => {
     const row = await ctx.db
       .query("apiKeys")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
       .unique();
     if (!row) return null;
     await ctx.db.patch(row._id, {
@@ -297,14 +313,17 @@ export const internalRecordSyncOutcome = internalMutation({
   handler: async (ctx, args) => {
     const row = await ctx.db
       .query("apiKeys")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
       .unique();
     if (!row) return null;
     const patch: Record<string, unknown> = {};
     if (args.lastSyncAt !== undefined) patch.lastSyncAt = args.lastSyncAt;
-    if (args.lastSyncError !== undefined) patch.lastSyncError = args.lastSyncError ?? undefined;
-    if (args.rateLimitRemaining !== undefined) patch.rateLimitRemaining = args.rateLimitRemaining;
-    if (args.rateLimitLimit !== undefined) patch.rateLimitLimit = args.rateLimitLimit;
+    if (args.lastSyncError !== undefined)
+      patch.lastSyncError = args.lastSyncError ?? undefined;
+    if (args.rateLimitRemaining !== undefined)
+      patch.rateLimitRemaining = args.rateLimitRemaining;
+    if (args.rateLimitLimit !== undefined)
+      patch.rateLimitLimit = args.rateLimitLimit;
     await ctx.db.patch(row._id, patch);
     return null;
   },
@@ -314,7 +333,9 @@ export const internalApplyPlayerSync = internalMutation({
   args: {
     userId: v.id("users"),
     playerPatch: v.any(),
-    skills: v.array(v.object({ skill: v.string(), level: v.number(), exp: v.number() })),
+    skills: v.array(
+      v.object({ skill: v.string(), level: v.number(), exp: v.number() }),
+    ),
     equipment: v.array(
       v.object({
         slot: v.string(),
@@ -332,30 +353,33 @@ export const internalApplyPlayerSync = internalMutation({
     const { userId, playerPatch, skills, equipment } = args;
     const existing = await ctx.db
       .query("playerData")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
     if (existing) {
       await ctx.db.delete(existing._id);
     }
-    await ctx.db.insert(
-      "playerData",
-      { userId, ...(playerPatch as Record<string, unknown>) } as Parameters<
-        typeof ctx.db.insert<"playerData">
-      >[1],
-    );
+    await ctx.db.insert("playerData", {
+      userId,
+      ...(playerPatch as Record<string, unknown>),
+    } as Parameters<typeof ctx.db.insert<"playerData">>[1]);
 
     const oldSkills = await ctx.db
       .query("playerSkills")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .collect();
     for (const s of oldSkills) await ctx.db.delete(s._id);
     for (const s of skills) {
-      await ctx.db.insert("playerSkills", { userId, skill: s.skill, level: s.level, exp: s.exp });
+      await ctx.db.insert("playerSkills", {
+        userId,
+        skill: s.skill,
+        level: s.level,
+        exp: s.exp,
+      });
     }
 
     const oldEq = await ctx.db
       .query("equipment")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .collect();
     for (const e of oldEq) await ctx.db.delete(e._id);
     for (const e of equipment) {
@@ -380,9 +404,12 @@ async function smmoCall(
   apiKey: string,
   path: string,
 ): Promise<{ json: unknown; rate: SmmoRateMeta }> {
-  const reservedAt = await ctx.runMutation(internal.syncPlayer.internalReserveSmmoRequest, {
-    userId,
-  });
+  const reservedAt = await ctx.runMutation(
+    internal.syncPlayer.internalReserveSmmoRequest,
+    {
+      userId,
+    },
+  );
   try {
     const { json, rate } = await smmoFetchJson(apiKey, path);
     await ctx.runMutation(internal.syncPlayer.internalPatchApiKeyRateMeta, {
@@ -414,7 +441,8 @@ export const validateAndSaveCredentials = action({
   }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("You must be signed in to save API credentials.");
+    if (!userId)
+      throw new Error("You must be signed in to save API credentials.");
 
     const key = args.smmoApiKey.trim();
     if (!key) throw new Error("API key is required.");
@@ -422,7 +450,10 @@ export const validateAndSaveCredentials = action({
       throw new Error("Player ID must be a positive integer.");
     }
 
-    const existing = await ctx.runQuery(internal.syncPlayer.internalGetApiKeysRow, { userId });
+    const existing = await ctx.runQuery(
+      internal.syncPlayer.internalGetApiKeysRow,
+      { userId },
+    );
     const path = `/v1/player/info/${args.smmoPlayerId}`;
     let json: unknown;
     let rate: SmmoRateMeta;
@@ -439,7 +470,9 @@ export const validateAndSaveCredentials = action({
     const body = json as Record<string, unknown>;
     const id = n(body.id);
     if (id && id !== args.smmoPlayerId) {
-      throw new Error("Player ID does not match the profile returned by the API.");
+      throw new Error(
+        "Player ID does not match the profile returned by the API.",
+      );
     }
     const playerName = typeof body.name === "string" ? body.name : "Player";
     const now = Date.now();
@@ -467,11 +500,13 @@ export const syncAll = action({
     rateLimitLimit: v.optional(v.number()),
     lastSyncAt: v.number(),
   }),
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("You must be signed in to sync.");
 
-    const row = await ctx.runQuery(internal.syncPlayer.internalGetApiKeysRow, { userId });
+    const row = await ctx.runQuery(internal.syncPlayer.internalGetApiKeysRow, {
+      userId,
+    });
     if (!row) {
       throw new Error("Add and validate your SMMO API key in Settings first.");
     }
@@ -481,7 +516,12 @@ export const syncAll = action({
     const pid = row.smmoPlayerId;
 
     try {
-      const v1Res = await smmoCall(ctx, userId, apiKey, `/v1/player/info/${pid}`);
+      const v1Res = await smmoCall(
+        ctx,
+        userId,
+        apiKey,
+        `/v1/player/info/${pid}`,
+      );
       aggregateRate = mergeRateMeta(aggregateRate, v1Res.rate);
       const v1 = v1Res.json as Record<string, unknown> | null;
 
@@ -489,18 +529,30 @@ export const syncAll = action({
       aggregateRate = mergeRateMeta(aggregateRate, v2Res.rate);
       const v2 = v2Res.json as Record<string, unknown> | null;
 
-      const skillsRes = await smmoCall(ctx, userId, apiKey, `/v1/player/skills/${pid}`);
+      const skillsRes = await smmoCall(
+        ctx,
+        userId,
+        apiKey,
+        `/v1/player/skills/${pid}`,
+      );
       aggregateRate = mergeRateMeta(aggregateRate, skillsRes.rate);
       const skills = parseSkillsPayload(skillsRes.json);
 
-      const eqRes = await smmoCall(ctx, userId, apiKey, `/v1/player/equipment/${pid}`);
+      const eqRes = await smmoCall(
+        ctx,
+        userId,
+        apiKey,
+        `/v1/player/equipment/${pid}`,
+      );
       aggregateRate = mergeRateMeta(aggregateRate, eqRes.rate);
       const eqRaw = eqRes.json;
       const eqMap: Record<string, string> = {};
       if (eqRaw && typeof eqRaw === "object" && !Array.isArray(eqRaw)) {
         const top = eqRaw as Record<string, unknown>;
         const inner =
-          top.data !== undefined && typeof top.data === "object" && !Array.isArray(top.data)
+          top.data !== undefined &&
+          typeof top.data === "object" &&
+          !Array.isArray(top.data)
             ? (top.data as Record<string, unknown>)
             : top;
         for (const [k, v] of Object.entries(inner)) {
@@ -523,14 +575,22 @@ export const syncAll = action({
         if (!Number.isFinite(itemId)) continue;
         const slot = normalizeEquipmentSlot(String(slotLabel));
         try {
-          const itemRes = await smmoCall(ctx, userId, apiKey, `/v1/items/info/${itemId}`);
+          const itemRes = await smmoCall(
+            ctx,
+            userId,
+            apiKey,
+            `/v1/items/info/${itemId}`,
+          );
           aggregateRate = mergeRateMeta(aggregateRate, itemRes.rate);
           const item = itemRes.json as Record<string, unknown>;
           const bonuses = itemStatBonuses(item);
           equipment.push({
             slot,
             itemId,
-            itemName: buildItemDisplayName(item.type, item.name ?? (item as { item_name?: string }).item_name),
+            itemName: buildItemDisplayName(
+              item.type,
+              item.name ?? (item as { item_name?: string }).item_name,
+            ),
             rarity: typeof item.rarity === "string" ? item.rarity : undefined,
             strBonus: bonuses.strBonus,
             defBonus: bonuses.defBonus,

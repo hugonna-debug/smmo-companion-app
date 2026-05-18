@@ -1,6 +1,21 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { LayoutDashboard, LogOut, Settings, Swords, Timer, Shield, Users, Skull, ShoppingCart, Package, Crosshair, Lock, Trophy, Eye } from "lucide-react";
+import {
+  Crosshair,
+  Eye,
+  LayoutDashboard,
+  Lock,
+  LogOut,
+  Package,
+  Settings,
+  Shield,
+  ShoppingCart,
+  Skull,
+  Swords,
+  Timer,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -41,7 +56,6 @@ const gameNav = [
   { href: "/vault", label: "Vault", icon: Lock },
   { href: "/collection", label: "Collection", icon: Trophy },
   { href: "/watchlist", label: "Watchlist", icon: Eye },
-
 ];
 
 function NavLink({
@@ -75,10 +89,12 @@ function SidebarNav() {
   return (
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel className="text-gold-dim text-[10px] uppercase tracking-widest">Overview</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-gold-dim text-[10px] uppercase tracking-widest">
+          Overview
+        </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {mainNav.map((item) => (
+            {mainNav.map(item => (
               <NavLink
                 key={item.href}
                 href={item.href}
@@ -91,10 +107,12 @@ function SidebarNav() {
         </SidebarGroupContent>
       </SidebarGroup>
       <SidebarGroup>
-        <SidebarGroupLabel className="text-gold-dim text-[10px] uppercase tracking-widest">Game Tools</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-gold-dim text-[10px] uppercase tracking-widest">
+          Game Tools
+        </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {gameNav.map((item) => (
+            {gameNav.map(item => (
               <NavLink
                 key={item.href}
                 href={item.href}
@@ -179,7 +197,9 @@ function SidebarHeaderContent() {
         </div>
         <div className="flex flex-col">
           <span className="font-semibold text-sm text-gold">SMMO</span>
-          <span className="text-[10px] text-muted-foreground -mt-0.5">Companion</span>
+          <span className="text-[10px] text-muted-foreground -mt-0.5">
+            Companion
+          </span>
         </div>
       </Link>
     </SidebarHeader>

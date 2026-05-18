@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useLayout, type DeadZonePosition } from "../contexts/LayoutContext";
+import { type DeadZonePosition, useLayout } from "../contexts/LayoutContext";
 import { BottomNav } from "./BottomNav";
 
 /**
@@ -16,24 +16,36 @@ export function LShapeLayout() {
   const { config } = useLayout();
   const { deadZonePosition, deadZoneWidth, deadZoneHeight } = config;
 
-  const gridStyle = getGridStyle(deadZonePosition, deadZoneWidth, deadZoneHeight);
-  const isDeadOnRight = deadZonePosition === "top-right" || deadZonePosition === "bottom-right";
-  const isDeadOnTop = deadZonePosition === "top-right" || deadZonePosition === "top-left";
+  const gridStyle = getGridStyle(
+    deadZonePosition,
+    deadZoneWidth,
+    deadZoneHeight,
+  );
+  const isDeadOnRight =
+    deadZonePosition === "top-right" || deadZonePosition === "bottom-right";
+  const isDeadOnTop =
+    deadZonePosition === "top-right" || deadZonePosition === "top-left";
 
   return (
     <div className="l-shape-container" style={gridStyle}>
       {/* Side: the tall narrow arm — holds main page content */}
-      <div className={`l-shape-side ${isDeadOnRight ? "border-r-0" : "border-l-0"}`}>
+      <div
+        className={`l-shape-side ${isDeadOnRight ? "border-r-0" : "border-l-0"}`}
+      >
         <div className="l-shape-side-scroll">
           <Outlet />
         </div>
       </div>
 
       {/* Strip: the wide short arm — holds secondary quick-glance info */}
-      <div className={`l-shape-strip ${isDeadOnTop ? "border-t-0" : "border-b-0"}`}>
+      <div
+        className={`l-shape-strip ${isDeadOnTop ? "border-t-0" : "border-b-0"}`}
+      >
         <div className="l-shape-strip-scroll">
           <div className="l-shape-strip-hint">
-            <span className="text-[10px] text-muted-foreground">↕ Scroll side panel for full content</span>
+            <span className="text-[10px] text-muted-foreground">
+              ↕ Scroll side panel for full content
+            </span>
           </div>
         </div>
       </div>

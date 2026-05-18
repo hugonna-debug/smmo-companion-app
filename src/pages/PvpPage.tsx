@@ -1,25 +1,21 @@
 import { useMutation, useQuery } from "convex/react";
 import {
-  Swords,
-  ShieldAlert,
-  Eye,
-  EyeOff,
-  SkipForward,
-  Trophy,
   AlertTriangle,
   ChevronRight,
+  Eye,
+  EyeOff,
   Filter,
+  ShieldAlert,
   ShieldCheck,
+  SkipForward,
+  Swords,
+  Trophy,
 } from "lucide-react";
 import { useState } from "react";
-import { api } from "../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  formatGold,
-  formatNumber,
-  getWarStatus,
-} from "@/lib/gameUtils";
+import { Button } from "@/components/ui/button";
+import { formatGold, formatNumber, getWarStatus } from "@/lib/gameUtils";
+import { api } from "../../convex/_generated/api";
 
 export function PvpPage() {
   const wars = useQuery(api.gameData.getGuildWars);
@@ -41,8 +37,8 @@ export function PvpPage() {
     return <PvpSkeleton />;
   }
 
-  const activeWars = wars.filter((w) => !w.isBlacklisted);
-  const blacklisted = wars.filter((w) => w.isBlacklisted);
+  const activeWars = wars.filter(w => !w.isBlacklisted);
+  const blacklisted = wars.filter(w => w.isBlacklisted);
   const totalOurScore = activeWars.reduce((sum, w) => sum + w.ourScore, 0);
   const totalEnemyScore = activeWars.reduce((sum, w) => sum + w.enemyScore, 0);
 
@@ -50,21 +46,22 @@ export function PvpPage() {
   const enemyGuildIds = activeWars.map(w => w.enemyGuildId);
 
   // Filter targets — matching real SMMO Colosseum filters
-  const filteredTargets = (targets || []).filter((t) => {
+  const filteredTargets = (targets || []).filter(t => {
     if (t.isSkipped) return false;
     // Level range
     const min = minLevel ? Number.parseInt(minLevel) : 0;
     const max = maxLevel ? Number.parseInt(maxLevel) : 999999;
     if (t.targetLevel < min || t.targetLevel > max) return false;
     // Guild enemies only
-    if (guildEnemiesOnly && !enemyGuildIds.includes(t.targetGuildId)) return false;
+    if (guildEnemiesOnly && !enemyGuildIds.includes(t.targetGuildId))
+      return false;
     // Safe mode filter
     if (hideSafeMode && t.targetSafeMode) return false;
     // Minimum gold
     const goldMin = minGold ? Number.parseInt(minGold) : 0;
     if (t.targetGold < goldMin) return false;
     // Exclude targets from blacklisted guilds
-    const blacklistedIds = blacklisted.map((w) => w.enemyGuildId);
+    const blacklistedIds = blacklisted.map(w => w.enemyGuildId);
     if (blacklistedIds.includes(t.targetGuildId)) return false;
     return true;
   });
@@ -78,7 +75,10 @@ export function PvpPage() {
           <h1 className="text-lg font-bold">Guild PvP</h1>
         </div>
         {player?.guildName && (
-          <Badge variant="outline" className="text-[11px] border-primary/30 text-primary">
+          <Badge
+            variant="outline"
+            className="text-[11px] border-primary/30 text-primary"
+          >
             ⚜ {player.guildName}
           </Badge>
         )}
@@ -87,18 +87,28 @@ export function PvpPage() {
       {/* Summary bar */}
       <div className="game-card flex items-center justify-between">
         <div className="text-center flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Wars</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Wars
+          </p>
           <p className="text-lg font-bold text-primary">{activeWars.length}</p>
         </div>
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Our Total</p>
-          <p className="text-lg font-bold text-success">{formatNumber(totalOurScore)}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Our Total
+          </p>
+          <p className="text-lg font-bold text-success">
+            {formatNumber(totalOurScore)}
+          </p>
         </div>
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Enemy Total</p>
-          <p className="text-lg font-bold text-destructive">{formatNumber(totalEnemyScore)}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Enemy Total
+          </p>
+          <p className="text-lg font-bold text-destructive">
+            {formatNumber(totalEnemyScore)}
+          </p>
         </div>
       </div>
 
@@ -108,7 +118,9 @@ export function PvpPage() {
           type="button"
           onClick={() => setActiveTab("wars")}
           className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
-            activeTab === "wars" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            activeTab === "wars"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground"
           }`}
         >
           Guild Wars ({wars.length})
@@ -117,7 +129,9 @@ export function PvpPage() {
           type="button"
           onClick={() => setActiveTab("targets")}
           className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
-            activeTab === "targets" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            activeTab === "targets"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground"
           }`}
         >
           Targets ({filteredTargets.length})
@@ -130,31 +144,47 @@ export function PvpPage() {
           {wars.length === 0 ? (
             <div className="game-card text-center py-8">
               <ShieldAlert className="size-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No active guild wars</p>
-              <p className="text-[11px] text-muted-foreground/60 mt-1">Connect your API key to load real war data</p>
+              <p className="text-sm text-muted-foreground">
+                No active guild wars
+              </p>
+              <p className="text-[11px] text-muted-foreground/60 mt-1">
+                Connect your API key to load real war data
+              </p>
             </div>
           ) : (
             <>
               {/* Active Wars */}
-              {activeWars.map((war) => {
+              {activeWars.map(war => {
                 const status = getWarStatus(war.ourScore, war.enemyScore);
                 return (
                   <div key={war._id} className="game-card">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold truncate">{war.enemyGuildName}</span>
-                          <span className={`text-[10px] font-medium ${status.color}`}>{status.label}</span>
+                          <span className="text-sm font-semibold truncate">
+                            {war.enemyGuildName}
+                          </span>
+                          <span
+                            className={`text-[10px] font-medium ${status.color}`}
+                          >
+                            {status.label}
+                          </span>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                           <div className="flex items-center gap-1">
                             <Trophy className="size-3 text-success" />
-                            <span className="text-[11px] font-mono text-success">{war.ourScore}</span>
+                            <span className="text-[11px] font-mono text-success">
+                              {war.ourScore}
+                            </span>
                           </div>
-                          <span className="text-[10px] text-muted-foreground">vs</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            vs
+                          </span>
                           <div className="flex items-center gap-1">
                             <Trophy className="size-3 text-destructive" />
-                            <span className="text-[11px] font-mono text-destructive">{war.enemyScore}</span>
+                            <span className="text-[11px] font-mono text-destructive">
+                              {war.enemyScore}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -187,9 +217,14 @@ export function PvpPage() {
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
                     Blacklisted ({blacklisted.length})
                   </p>
-                  {blacklisted.map((war) => (
-                    <div key={war._id} className="game-card opacity-50 flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">{war.enemyGuildName}</span>
+                  {blacklisted.map(war => (
+                    <div
+                      key={war._id}
+                      className="game-card opacity-50 flex items-center justify-between"
+                    >
+                      <span className="text-sm text-muted-foreground">
+                        {war.enemyGuildName}
+                      </span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -230,23 +265,33 @@ export function PvpPage() {
               {/* Level range */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-muted-foreground" htmlFor="minLvl">Minimum Level</label>
+                  <label
+                    className="text-[10px] text-muted-foreground"
+                    htmlFor="minLvl"
+                  >
+                    Minimum Level
+                  </label>
                   <input
                     id="minLvl"
                     type="number"
                     value={minLevel}
-                    onChange={(e) => setMinLevel(e.target.value)}
+                    onChange={e => setMinLevel(e.target.value)}
                     placeholder="200"
                     className="w-full mt-0.5 h-8 text-xs bg-input border border-border rounded-md px-2 focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground" htmlFor="maxLvl">Max Level</label>
+                  <label
+                    className="text-[10px] text-muted-foreground"
+                    htmlFor="maxLvl"
+                  >
+                    Max Level
+                  </label>
                   <input
                     id="maxLvl"
                     type="number"
                     value={maxLevel}
-                    onChange={(e) => setMaxLevel(e.target.value)}
+                    onChange={e => setMaxLevel(e.target.value)}
                     placeholder="999999"
                     className="w-full mt-0.5 h-8 text-xs bg-input border border-border rounded-md px-2 focus:outline-none focus:ring-1 focus:ring-primary"
                   />
@@ -255,7 +300,10 @@ export function PvpPage() {
 
               {/* Guild Enemies toggle */}
               <div className="flex items-center justify-between">
-                <label className="text-[11px] text-muted-foreground" htmlFor="guildEnemies">
+                <label
+                  className="text-[11px] text-muted-foreground"
+                  htmlFor="guildEnemies"
+                >
                   Guild Enemies (In War)
                 </label>
                 <button
@@ -266,15 +314,20 @@ export function PvpPage() {
                     guildEnemiesOnly ? "bg-primary" : "bg-muted"
                   }`}
                 >
-                  <div className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform ${
-                    guildEnemiesOnly ? "translate-x-5" : "translate-x-0"
-                  }`} />
+                  <div
+                    className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform ${
+                      guildEnemiesOnly ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
                 </button>
               </div>
 
               {/* Hide Safe Mode toggle */}
               <div className="flex items-center justify-between">
-                <label className="text-[11px] text-muted-foreground" htmlFor="safeModeFilter">
+                <label
+                  className="text-[11px] text-muted-foreground"
+                  htmlFor="safeModeFilter"
+                >
                   Hide Safe Mode Players
                 </label>
                 <button
@@ -285,20 +338,27 @@ export function PvpPage() {
                     hideSafeMode ? "bg-primary" : "bg-muted"
                   }`}
                 >
-                  <div className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform ${
-                    hideSafeMode ? "translate-x-5" : "translate-x-0"
-                  }`} />
+                  <div
+                    className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform ${
+                      hideSafeMode ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
                 </button>
               </div>
 
               {/* Minimum Gold */}
               <div>
-                <label className="text-[10px] text-muted-foreground" htmlFor="minGold">Minimum Gold</label>
+                <label
+                  className="text-[10px] text-muted-foreground"
+                  htmlFor="minGold"
+                >
+                  Minimum Gold
+                </label>
                 <input
                   id="minGold"
                   type="number"
                   value={minGold}
-                  onChange={(e) => setMinGold(e.target.value)}
+                  onChange={e => setMinGold(e.target.value)}
                   placeholder="0"
                   className="w-full mt-0.5 h-8 text-xs bg-input border border-border rounded-md px-2 focus:outline-none focus:ring-1 focus:ring-primary"
                 />
@@ -310,8 +370,12 @@ export function PvpPage() {
           {filteredTargets.length === 0 ? (
             <div className="game-card text-center py-6">
               <Swords className="size-6 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No targets available</p>
-              <p className="text-[11px] text-muted-foreground/60 mt-1">Adjust filters or refresh data</p>
+              <p className="text-sm text-muted-foreground">
+                No targets available
+              </p>
+              <p className="text-[11px] text-muted-foreground/60 mt-1">
+                Adjust filters or refresh data
+              </p>
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -323,7 +387,9 @@ export function PvpPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold truncate">{target.targetName}</span>
+                        <span className="text-sm font-semibold truncate">
+                          {target.targetName}
+                        </span>
                         {target.targetSafeMode && (
                           <span className="text-[9px] px-1 py-0.5 rounded bg-success/20 text-success font-medium flex items-center gap-0.5">
                             <ShieldCheck className="size-2.5" />
@@ -333,8 +399,12 @@ export function PvpPage() {
                       </div>
                       <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
                         <span>Lv. {formatNumber(target.targetLevel)}</span>
-                        <span className="text-primary/70">⚜ {target.targetGuildName}</span>
-                        <span className="text-gold-dim">💰 {formatGold(target.targetGold)}</span>
+                        <span className="text-primary/70">
+                          ⚜ {target.targetGuildName}
+                        </span>
+                        <span className="text-gold-dim">
+                          💰 {formatGold(target.targetGold)}
+                        </span>
                       </div>
                       {/* HP bar — RED like real SMMO */}
                       <div className="flex items-center gap-2 mt-1.5">
@@ -383,7 +453,8 @@ export function PvpPage() {
       )}
 
       <p className="text-[10px] text-muted-foreground text-center">
-        Mock data · Rate limit: 40 req/min · Targets generated dynamically to avoid rate limits
+        Mock data · Rate limit: 40 req/min · Targets generated dynamically to
+        avoid rate limits
       </p>
     </div>
   );

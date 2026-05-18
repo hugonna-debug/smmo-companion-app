@@ -1,17 +1,17 @@
 import { useMutation, useQuery } from "convex/react";
 import {
   Package,
+  Search,
   Star,
   StarOff,
-  Trash2,
-  Search,
   StickyNote,
+  Trash2,
 } from "lucide-react";
-import { useState, useMemo } from "react";
-import { api } from "../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { formatGold, getRarityColor, getRarityBorder } from "@/lib/gameUtils";
+import { Button } from "@/components/ui/button";
+import { formatGold, getRarityBorder, getRarityColor } from "@/lib/gameUtils";
+import { api } from "../../convex/_generated/api";
 
 const CATEGORIES = [
   { key: "all", label: "All", icon: "📦" },
@@ -34,11 +34,16 @@ export function PersonalItemsPage() {
   const filtered = useMemo(() => {
     if (!items) return [];
     let list = [...items];
-    if (activeCategory !== "all") list = list.filter(i => i.category === activeCategory);
+    if (activeCategory !== "all")
+      list = list.filter(i => i.category === activeCategory);
     if (showFavsOnly) list = list.filter(i => i.isFavorite);
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter(i => i.itemName.toLowerCase().includes(q) || (i.notes?.toLowerCase().includes(q)));
+      list = list.filter(
+        i =>
+          i.itemName.toLowerCase().includes(q) ||
+          i.notes?.toLowerCase().includes(q),
+      );
     }
     // Sort: favorites first, then by name
     list.sort((a, b) => {
@@ -54,7 +59,10 @@ export function PersonalItemsPage() {
         <div className="h-6 w-44 rounded bg-muted animate-pulse" />
         <div className="flex gap-1">
           {[...Array(5)].map((_, i) => (
-            <div key={`cskel-${i}`} className="h-8 w-16 rounded bg-muted animate-pulse" />
+            <div
+              key={`cskel-${i}`}
+              className="h-8 w-16 rounded bg-muted animate-pulse"
+            />
           ))}
         </div>
         {[...Array(6)].map((_, i) => (
@@ -65,12 +73,18 @@ export function PersonalItemsPage() {
   }
 
   const totalItems = items.length;
-  const totalValue = items.reduce((sum, i) => sum + ((i.value ?? 0) * i.quantity), 0);
+  const totalValue = items.reduce(
+    (sum, i) => sum + (i.value ?? 0) * i.quantity,
+    0,
+  );
   const favCount = items.filter(i => i.isFavorite).length;
-  const categoryCounts = CATEGORIES.slice(1).reduce((acc, c) => {
-    acc[c.key] = items.filter(i => i.category === c.key).length;
-    return acc;
-  }, {} as Record<string, number>);
+  const categoryCounts = CATEGORIES.slice(1).reduce(
+    (acc, c) => {
+      acc[c.key] = items.filter(i => i.category === c.key).length;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return (
     <div className="p-3 md:p-4 space-y-3 max-w-4xl">
@@ -82,24 +96,32 @@ export function PersonalItemsPage() {
       {/* Summary */}
       <div className="game-card flex items-center justify-between">
         <div className="text-center flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Items</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Items
+          </p>
           <p className="text-lg font-bold text-primary">{totalItems}</p>
         </div>
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Est. Value</p>
-          <p className="text-lg font-bold text-gold-dim">💰 {formatGold(totalValue)}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Est. Value
+          </p>
+          <p className="text-lg font-bold text-gold-dim">
+            💰 {formatGold(totalValue)}
+          </p>
         </div>
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Favorites</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Favorites
+          </p>
           <p className="text-lg font-bold text-warning">⭐ {favCount}</p>
         </div>
       </div>
 
       {/* Category tabs */}
       <div className="flex gap-1 overflow-x-auto pb-0.5 -mx-1 px-1">
-        {CATEGORIES.map((cat) => (
+        {CATEGORIES.map(cat => (
           <button
             key={cat.key}
             type="button"
@@ -128,7 +150,7 @@ export function PersonalItemsPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Search items..."
             className="w-full h-8 text-xs bg-input border border-border rounded-md pl-7 pr-2 focus:outline-none focus:ring-1 focus:ring-primary"
           />
@@ -139,7 +161,9 @@ export function PersonalItemsPage() {
           className="h-8 px-2 text-[11px]"
           onClick={() => setShowFavsOnly(!showFavsOnly)}
         >
-          <Star className={`size-3 ${showFavsOnly ? "text-warning fill-warning" : ""}`} />
+          <Star
+            className={`size-3 ${showFavsOnly ? "text-warning fill-warning" : ""}`}
+          />
           Favs
         </Button>
       </div>
@@ -150,20 +174,27 @@ export function PersonalItemsPage() {
           <Package className="size-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">No items found</p>
           <p className="text-[11px] text-muted-foreground/60 mt-1">
-            {search ? "Try a different search" : "Connect API key to load your items"}
+            {search
+              ? "Try a different search"
+              : "Connect API key to load your items"}
           </p>
         </div>
       ) : (
         <div className="space-y-1.5">
-          {filtered.map((item) => (
-            <div key={item._id} className={`game-card ${getRarityBorder(item.rarity)}`}>
+          {filtered.map(item => (
+            <div
+              key={item._id}
+              className={`game-card ${getRarityBorder(item.rarity)}`}
+            >
               <div className="flex items-start gap-3">
                 <div className="size-10 rounded-lg bg-secondary/50 flex items-center justify-center text-lg shrink-0">
                   {getCategoryIcon(item.category)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`text-sm font-semibold truncate ${getRarityColor(item.rarity)}`}>
+                    <span
+                      className={`text-sm font-semibold truncate ${getRarityColor(item.rarity)}`}
+                    >
                       {item.itemName}
                     </span>
                     {item.quantity > 1 && (
@@ -174,7 +205,9 @@ export function PersonalItemsPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {item.rarity && (
-                      <span className={`text-[10px] font-medium capitalize ${getRarityColor(item.rarity)}`}>
+                      <span
+                        className={`text-[10px] font-medium capitalize ${getRarityColor(item.rarity)}`}
+                      >
                         {item.rarity}
                       </span>
                     )}
@@ -190,7 +223,9 @@ export function PersonalItemsPage() {
                   {item.notes && (
                     <div className="flex items-center gap-1 mt-1">
                       <StickyNote className="size-2.5 text-muted-foreground shrink-0" />
-                      <p className="text-[10px] text-muted-foreground truncate">{item.notes}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {item.notes}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -231,11 +266,17 @@ export function PersonalItemsPage() {
 
 function getCategoryIcon(category: string): string {
   switch (category) {
-    case "inventory": return "🎒";
-    case "storage": return "🏪";
-    case "showcase": return "🏆";
-    case "avatar": return "🎨";
-    case "custom": return "⭐";
-    default: return "📦";
+    case "inventory":
+      return "🎒";
+    case "storage":
+      return "🏪";
+    case "showcase":
+      return "🏆";
+    case "avatar":
+      return "🎨";
+    case "custom":
+      return "⭐";
+    default:
+      return "📦";
   }
 }
