@@ -22,10 +22,15 @@
     "env:get": "bunx convex env get",
     "env:list": "bunx convex env list",
     "env:setup": "bun run --bun scripts/setup-env-local.ts",
-    "codegen:mock": "node scripts/generate-mock-convex.cjs"
+    "codegen:mock": "node scripts/generate-mock-convex.cjs",
+    "cap:sync": "bun run build && bunx cap sync",
+    "cap:open": "bunx cap open android"
   },
   "dependencies": {
     "@auth/core": "^0.37.4",
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "@convex-dev/auth": "^0.0.90",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
