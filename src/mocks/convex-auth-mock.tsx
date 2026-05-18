@@ -13,7 +13,7 @@ export const ConvexAuthProvider = ({
 
 export function useAuthActions() {
   return {
-    signIn: async (provider: string, formData?: any) => {
+    signIn: async (_provider: string, _formData?: any) => {
       localStorage.setItem(AUTH_KEY, "true");
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new Event("smmo_preview_update"));

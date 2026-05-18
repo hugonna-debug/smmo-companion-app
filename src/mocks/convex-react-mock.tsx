@@ -197,19 +197,17 @@ const getPath = (apiFunction: any): string => {
       const val = apiFunction[functionNameSymbol];
       if (typeof val === "string") return val;
     }
-  } catch (e) {}
+  } catch (_e) {}
   try {
     if (typeof apiFunction.toString === "function") {
       const val = apiFunction.toString();
       if (typeof val === "string") return val;
     }
-  } catch (e) {}
+  } catch (_e) {}
   return "";
 };
 
-export class ConvexReactClient {
-  constructor(url: string) {}
-}
+export class ConvexReactClient {}
 
 export const ConvexProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
@@ -238,9 +236,9 @@ export function useConvexAuth() {
   };
 }
 
-export function useQuery(apiFunction: any, ...args: any[]) {
+export function useQuery(apiFunction: any, ..._args: any[]) {
   const [data, setData] = useState<any>(undefined);
-  const [tick, setTick] = useState(0);
+  const [_tick, setTick] = useState(0);
 
   useEffect(() => {
     const handleQueryUpdate = () => {
@@ -293,7 +291,7 @@ export function useQuery(apiFunction: any, ...args: any[]) {
     } else {
       setData([]);
     }
-  }, [apiFunction, tick, ...args]);
+  }, [apiFunction]);
 
   return data;
 }
@@ -373,8 +371,8 @@ export function useMutation(apiFunction: any) {
   };
 }
 
-export function useAction(apiFunction: any) {
-  return async (args: any) => {
+export function useAction(_apiFunction: any) {
+  return async (_args: any) => {
     return { success: true };
   };
 }

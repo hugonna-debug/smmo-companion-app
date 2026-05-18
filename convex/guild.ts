@@ -3,7 +3,13 @@ import type { GenericActionCtx } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
-import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { type SmmoRateMeta, smmoFetchJson } from "./smmoApi";
 
 async function smmoCall(
@@ -39,12 +45,12 @@ async function smmoCall(
 
 export const getSettings = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
     return await ctx.db
       .query("guildSettings")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
   },
 });
@@ -60,7 +66,7 @@ export const updateSettings = mutation({
 
     const existing = await ctx.db
       .query("guildSettings")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
 
     if (existing) {
@@ -83,7 +89,7 @@ export const internalGetGuildSettings = internalQuery({
   handler: async (ctx, { userId }) => {
     return await ctx.db
       .query("guildSettings")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
   },
 });
@@ -100,10 +106,12 @@ export const internalApplyGuildSync = internalMutation({
     // Get existing members to compare for milestones
     const existingMembers = await ctx.db
       .query("guildMembers")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .collect();
 
-    const existingMemberMap = new Map(existingMembers.map((m) => [m.memberId, m]));
+    const existingMemberMap = new Map(
+      existingMembers.map(m => [m.memberId, m]),
+    );
     const milestones: string[] = [];
 
     // Delete old members
@@ -114,13 +122,15 @@ export const internalApplyGuildSync = internalMutation({
     // Insert new members and check for milestones
     for (const m of members) {
       const old = existingMemberMap.get(m.user_id);
-      
+
       // Level milestone (e.g., every 100 levels)
       if (old && Math.floor(m.level / 100) > Math.floor(old.level / 100)) {
         milestones.push(`🎉 **${m.name}** reached level **${m.level}**!`);
       } else if (!old) {
         // New member milestone
-         milestones.push(`👋 **${m.name}** joined the guild! (Level ${m.level})`);
+        milestones.push(
+          `👋 **${m.name}** joined the guild! (Level ${m.level})`,
+        );
       }
 
       await ctx.db.insert("guildMembers", {
@@ -143,7 +153,7 @@ export const internalApplyGuildSync = internalMutation({
     // Update last sync time
     const settings = await ctx.db
       .query("guildSettings")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", q => q.eq("userId", userId))
       .unique();
     if (settings) {
       await ctx.db.patch(settings._id, { lastSyncAt: now });
@@ -155,27 +165,41 @@ export const internalApplyGuildSync = internalMutation({
 
 export const syncMembers = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const settings = await ctx.runQuery(internal.guild.internalGetGuildSettings, { userId });
+    const settings = await ctx.runQuery(
+      internal.guild.internalGetGuildSettings,
+      { userId },
+    );
     if (!settings || !settings.guildId) {
       throw new Error("Guild ID not configured");
     }
 
-    const apiKeys = await ctx.runQuery(internal.syncPlayer.internalGetApiKeysRow, { userId });
+    const apiKeys = await ctx.runQuery(
+      internal.syncPlayer.internalGetApiKeysRow,
+      { userId },
+    );
     if (!apiKeys) throw new Error("API key not configured");
 
-    const { json } = await smmoCall(ctx, userId, apiKeys.smmoApiKey, `/v1/guild/members/${settings.guildId}`);
+    const { json } = await smmoCall(
+      ctx,
+      userId,
+      apiKeys.smmoApiKey,
+      `/v1/guild/members/${settings.guildId}`,
+    );
     const members = json as any[];
 
     const now = Date.now();
-    const milestones = await ctx.runMutation(internal.guild.internalApplyGuildSync, {
-      userId,
-      members,
-      now,
-    });
+    const milestones = await ctx.runMutation(
+      internal.guild.internalApplyGuildSync,
+      {
+        userId,
+        members,
+        now,
+      },
+    );
 
     if (milestones.length > 0 && settings.discordWebhookUrl) {
       await postToDiscord(settings.discordWebhookUrl, {

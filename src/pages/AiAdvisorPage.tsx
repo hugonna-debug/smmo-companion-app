@@ -54,7 +54,7 @@ export function AiAdvisorPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, []);
 
   const handleSend = async (text?: string) => {
     const content = text || input.trim();

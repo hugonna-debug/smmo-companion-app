@@ -1,8 +1,6 @@
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
   Bell,
-  Github,
-  Layout,
   Loader2,
   RefreshCw,
   Settings,
@@ -12,7 +10,13 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "../../convex/_generated/api";
@@ -32,7 +36,7 @@ export function GuildManagement() {
     setIsUpdating(true);
     try {
       await updateSettings({
-        guildId: guildId ? parseInt(guildId) : undefined,
+        guildId: guildId ? parseInt(guildId, 10) : undefined,
         discordWebhookUrl: discordWebhookUrl || undefined,
       });
       toast.success("Settings updated successfully");
@@ -49,7 +53,9 @@ export function GuildManagement() {
     try {
       const result = await syncMembers();
       setMilestones(result.milestones);
-      toast.success(`Sync complete! Found ${result.memberCount} members and ${result.milestones.length} milestones.`);
+      toast.success(
+        `Sync complete! Found ${result.memberCount} members and ${result.milestones.length} milestones.`,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Sync failed");
       console.error(error);
@@ -61,7 +67,8 @@ export function GuildManagement() {
   // Pre-fill state when settings load
   if (settings && !guildId && !discordWebhookUrl) {
     if (settings.guildId) setGuildId(settings.guildId.toString());
-    if (settings.discordWebhookUrl) setDiscordWebhookUrl(settings.discordWebhookUrl);
+    if (settings.discordWebhookUrl)
+      setDiscordWebhookUrl(settings.discordWebhookUrl);
   }
 
   return (
@@ -72,14 +79,20 @@ export function GuildManagement() {
             <Shield className="size-6 text-primary" />
             Guild Management
           </h1>
-          <p className="text-muted-foreground">Configure guild sync and Discord notifications</p>
+          <p className="text-muted-foreground">
+            Configure guild sync and Discord notifications
+          </p>
         </div>
-        <Button 
-          onClick={handleSyncMembers} 
+        <Button
+          onClick={handleSyncMembers}
           disabled={isSyncing || !settings?.guildId}
           className="gap-2"
         >
-          {isSyncing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+          {isSyncing ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="size-4" />
+          )}
           Sync Now
         </Button>
       </div>
@@ -102,11 +115,11 @@ export function GuildManagement() {
                 id="guildId"
                 placeholder="e.g. 1234"
                 value={guildId}
-                onChange={(e) => setGuildId(e.target.value)}
+                onChange={e => setGuildId(e.target.value)}
               />
             </div>
-            <Button 
-              onClick={handleUpdateSettings} 
+            <Button
+              onClick={handleUpdateSettings}
               disabled={isUpdating}
               className="w-full"
             >
@@ -133,11 +146,11 @@ export function GuildManagement() {
                 id="webhook"
                 placeholder="https://discord.com/api/webhooks/..."
                 value={discordWebhookUrl}
-                onChange={(e) => setDiscordWebhookUrl(e.target.value)}
+                onChange={e => setDiscordWebhookUrl(e.target.value)}
               />
             </div>
-            <Button 
-              onClick={handleUpdateSettings} 
+            <Button
+              onClick={handleUpdateSettings}
               disabled={isUpdating}
               variant="secondary"
               className="w-full"

@@ -398,7 +398,7 @@ export const internalApplyPlayerSync = internalMutation({
   },
 });
 
-async function smmoCall(
+export async function smmoCall(
   ctx: GenericActionCtx<DataModel>,
   userId: Id<"users">,
   apiKey: string,

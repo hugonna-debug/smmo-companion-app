@@ -1,6 +1,5 @@
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
-  AlertTriangle,
   ArrowLeft,
   Bell,
   LineChart as LineChartIcon,
@@ -38,11 +37,11 @@ export function MarketHelper() {
     if (!tracked) return [];
     if (!search) return tracked;
     const q = search.toLowerCase();
-    return tracked.filter((i) => i.itemName.toLowerCase().includes(q));
+    return tracked.filter(i => i.itemName.toLowerCase().includes(q));
   }, [tracked, search]);
 
   const selectedItem = useMemo(() => {
-    return tracked?.find((i) => i.itemId === selectedItemId);
+    return tracked?.find(i => i.itemId === selectedItemId);
   }, [tracked, selectedItemId]);
 
   const handleSync = async () => {
@@ -51,7 +50,7 @@ export function MarketHelper() {
     toast.promise(promise, {
       loading: "Syncing market prices...",
       success: "Market prices updated!",
-      error: (err) => `Sync failed: ${err.message}`,
+      error: err => `Sync failed: ${err.message}`,
     });
     try {
       await promise;
@@ -71,7 +70,7 @@ export function MarketHelper() {
         <div className="h-8 w-64 bg-muted animate-pulse rounded" />
         <div className="h-32 bg-muted animate-pulse rounded" />
         <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="h-20 bg-muted animate-pulse rounded" />
           ))}
         </div>
@@ -93,7 +92,9 @@ export function MarketHelper() {
           disabled={isSyncing}
           className="h-8 gap-2"
         >
-          <RefreshCw className={`size-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`size-3.5 ${isSyncing ? "animate-spin" : ""}`}
+          />
           Sync Market
         </Button>
       </div>
@@ -115,14 +116,19 @@ export function MarketHelper() {
               <ArrowLeft className="size-4 mr-1" />
               Back to list
             </Button>
-            <Badge variant="outline" className={getRarityColor(selectedItem.rarity)}>
+            <Badge
+              variant="outline"
+              className={getRarityColor(selectedItem.rarity)}
+            >
               {selectedItem.rarity}
             </Badge>
           </div>
 
           <div className="flex items-start justify-between">
             <div>
-              <h2 className={`text-lg font-bold ${getRarityColor(selectedItem.rarity)}`}>
+              <h2
+                className={`text-lg font-bold ${getRarityColor(selectedItem.rarity)}`}
+              >
                 {selectedItem.itemName}
               </h2>
               <p className="text-xs text-muted-foreground">
@@ -141,20 +147,22 @@ export function MarketHelper() {
 
           {/* Chart */}
           <div className="h-48 w-full mt-2">
-            {selectedItem.priceHistory && selectedItem.priceHistory.length > 1 ? (
+            {selectedItem.priceHistory &&
+            selectedItem.priceHistory.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={selectedItem.priceHistory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#333"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="timestamp"
                     hide
                     domain={["dataMin", "dataMax"]}
                     type="number"
                   />
-                  <YAxis
-                    hide
-                    domain={["auto", "auto"]}
-                  />
+                  <YAxis hide domain={["auto", "auto"]} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
@@ -164,7 +172,9 @@ export function MarketHelper() {
                               {formatGold(payload[0].value as number)}
                             </p>
                             <p className="text-muted-foreground">
-                              {new Date(payload[0].payload.timestamp).toLocaleString()}
+                              {new Date(
+                                payload[0].payload.timestamp,
+                              ).toLocaleString()}
                             </p>
                           </div>
                         );
@@ -197,16 +207,22 @@ export function MarketHelper() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <label
+                htmlFor="alert-below"
+                className="text-[10px] uppercase tracking-wider text-muted-foreground"
+              >
                 Alert Below
               </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Bell className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-warning" />
                   <input
+                    id="alert-below"
                     type="number"
                     defaultValue={selectedItem.alertBelow ?? ""}
-                    onBlur={(e) => handleSetAlert(selectedItem._id, e.target.value)}
+                    onBlur={e =>
+                      handleSetAlert(selectedItem._id, e.target.value)
+                    }
                     placeholder="Enter price..."
                     className="w-full h-8 text-xs bg-input border border-border rounded-md pl-7 pr-2"
                   />
@@ -214,9 +230,9 @@ export function MarketHelper() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 Circulation
-              </label>
+              </span>
               <p className="text-sm font-mono mt-1.5">
                 {selectedItem.circulation ?? "Unknown"}
               </p>
@@ -232,7 +248,7 @@ export function MarketHelper() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Filter tracked items..."
             className="w-full h-10 bg-input border border-border rounded-lg pl-9 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
           />
@@ -245,12 +261,17 @@ export function MarketHelper() {
           {filtered.length === 0 ? (
             <div className="text-center py-12 border border-dashed border-border rounded-xl">
               <Search className="size-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No matching items found</p>
+              <p className="text-sm text-muted-foreground">
+                No matching items found
+              </p>
             </div>
           ) : (
-            filtered.map((item) => {
+            filtered.map(item => {
               const change = getPriceChange(item.priceHistory);
-              const isAlerting = item.alertBelow && item.currentLow && item.currentLow <= item.alertBelow;
+              const isAlerting =
+                item.alertBelow &&
+                item.currentLow &&
+                item.currentLow <= item.alertBelow;
 
               return (
                 <button
@@ -266,10 +287,14 @@ export function MarketHelper() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-bold truncate ${getRarityColor(item.rarity)}`}>
+                        <span
+                          className={`text-sm font-bold truncate ${getRarityColor(item.rarity)}`}
+                        >
                           {item.itemName}
                         </span>
-                        {isAlerting && <Bell className="size-3 text-warning animate-pulse" />}
+                        {isAlerting && (
+                          <Bell className="size-3 text-warning animate-pulse" />
+                        )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs font-mono text-success">
@@ -285,7 +310,10 @@ export function MarketHelper() {
                     <div className="text-right shrink-0">
                       <PriceIndicator change={change} />
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        {item.circulation ? `${item.circulation} in circ` : "Price history: " + (item.priceHistory?.length ?? 0)}
+                        {item.circulation
+                          ? `${item.circulation} in circ`
+                          : "Price history: " +
+                            (item.priceHistory?.length ?? 0)}
                       </p>
                     </div>
                   </div>
@@ -309,13 +337,17 @@ function getPriceChange(history?: { price: number; timestamp: number }[]) {
 }
 
 function PriceIndicator({ change }: { change: number }) {
-  if (Math.abs(change) < 0.1) return <Badge variant="outline" className="text-[10px] opacity-50">Stable</Badge>;
-  
+  if (Math.abs(change) < 0.1)
+    return (
+      <Badge variant="outline" className="text-[10px] opacity-50">
+        Stable
+      </Badge>
+    );
+
   if (change > 0) {
     return (
       <div className="flex items-center text-success text-[10px] font-bold">
-        <TrendingUp className="size-3 mr-0.5" />
-        +{change.toFixed(1)}%
+        <TrendingUp className="size-3 mr-0.5" />+{change.toFixed(1)}%
       </div>
     );
   }
@@ -330,11 +362,17 @@ function PriceIndicator({ change }: { change: number }) {
 
 function getItemEmoji(type?: string) {
   switch (type?.toLowerCase()) {
-    case "weapon": return "⚔️";
-    case "armour": return "🛡️";
-    case "amulet": return "📿";
-    case "shield": return "🔰";
-    case "boots": return "👢";
-    default: return "📦";
+    case "weapon":
+      return "⚔️";
+    case "armour":
+      return "🛡️";
+    case "amulet":
+      return "📿";
+    case "shield":
+      return "🔰";
+    case "boots":
+      return "👢";
+    default:
+      return "📦";
   }
 }

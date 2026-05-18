@@ -12,10 +12,10 @@ test("generate-mock-convex.cjs", t => {
   t.mock.method(fs, "writeFileSync", (file, content) => {
     writtenFiles[file] = content;
   });
-  t.mock.method(fs, "existsSync", dir => {
+  t.mock.method(fs, "existsSync", _dir => {
     return false; // Force mkdirSync to be called
   });
-  t.mock.method(fs, "mkdirSync", (dir, opts) => {
+  t.mock.method(fs, "mkdirSync", (dir, _opts) => {
     createdDirs.push(dir);
   });
   t.mock.method(console, "log", msg => {

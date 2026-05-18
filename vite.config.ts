@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vite";
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(() => {
   const isPreview =
     process.env.VITE_IS_PREVIEW === "true" || !process.env.CONVEX_DEPLOY_KEY;
 

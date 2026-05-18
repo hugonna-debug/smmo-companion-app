@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { action, mutation, query, internalQuery } from "./_generated/server";
+import { action, internalQuery, mutation, query } from "./_generated/server";
 import { smmoCall } from "./syncPlayer";
 
 /**
@@ -13,7 +13,7 @@ export const getTrackedItemsInternal = internalQuery({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("marketTracking")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
       .collect();
   },
 });
@@ -31,16 +31,19 @@ export const updatePriceHistory = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     const item = await ctx.db.get(args.trackingId);
-    
+
     // Ensure the item exists and belongs to the user (if authenticated)
     if (!item) return;
     if (userId && item.userId !== userId) return;
 
     const now = Date.now();
     const history = item.priceHistory ?? [];
-    
+
     // Add new price point and keep the last 50 points for trend analysis
-    const newHistory = [...history, { price: args.price, timestamp: now }].slice(-50);
+    const newHistory = [
+      ...history,
+      { price: args.price, timestamp: now },
+    ].slice(-50);
 
     await ctx.db.patch(args.trackingId, {
       currentLow: args.currentLow,
@@ -63,8 +66,8 @@ export const getPriceHistory = query({
 
     return await ctx.db
       .query("marketTracking")
-      .withIndex("by_userId_itemId", (q) => 
-        q.eq("userId", userId).eq("itemId", args.itemId)
+      .withIndex("by_userId_itemId", q =>
+        q.eq("userId", userId).eq("itemId", args.itemId),
       )
       .unique();
   },
@@ -76,25 +79,38 @@ export const getPriceHistory = query({
  */
 export const syncMarketPrices = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const row = await ctx.runQuery(internal.syncPlayer.internalGetApiKeysRow, { userId });
-    if (!row) throw new Error("Add and validate your SMMO API key in Settings first.");
+    const row = await ctx.runQuery(internal.syncPlayer.internalGetApiKeysRow, {
+      userId,
+    });
+    if (!row)
+      throw new Error("Add and validate your SMMO API key in Settings first.");
 
-    const trackedItems = await ctx.runQuery(internal.market.getTrackedItemsInternal, { userId });
+    const trackedItems = await ctx.runQuery(
+      internal.market.getTrackedItemsInternal,
+      { userId },
+    );
     if (trackedItems.length === 0) return;
 
     for (const item of trackedItems) {
       try {
         // Fetch detailed item info which includes market low/high/circulation
-        const { json } = await smmoCall(ctx, userId, row.smmoApiKey, `/v1/items/info/${item.itemId}`);
+        const { json } = await smmoCall(
+          ctx,
+          userId,
+          row.smmoApiKey,
+          `/v1/items/info/${item.itemId}`,
+        );
         const info = json as any;
 
-        const low = typeof info.market_low === 'number' ? info.market_low : 0;
-        const high = typeof info.market_high === 'number' ? info.market_high : 0;
-        const circulation = typeof info.circulation === 'number' ? info.circulation : undefined;
+        const low = typeof info.market_low === "number" ? info.market_low : 0;
+        const high =
+          typeof info.market_high === "number" ? info.market_high : 0;
+        const circulation =
+          typeof info.circulation === "number" ? info.circulation : undefined;
 
         // Update the item record
         await ctx.runMutation(internal.market.updatePriceHistory, {
@@ -144,8 +160,8 @@ export const setPriceAlert = mutation({
     const item = await ctx.db.get(args.trackingId);
     if (!item || (userId && item.userId !== userId)) return;
 
-    await ctx.db.patch(args.trackingId, { 
-      alertBelow: args.alertBelow ?? undefined 
+    await ctx.db.patch(args.trackingId, {
+      alertBelow: args.alertBelow ?? undefined,
     });
   },
 });

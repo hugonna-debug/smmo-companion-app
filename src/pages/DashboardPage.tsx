@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import {
   AlertCircle,
   Battery,
@@ -275,9 +275,7 @@ export function DashboardPage() {
       </div>
 
       {/* Profession Status */}
-      {profession && profession.isWorking && (
-        <ProfessionWidget profession={profession} />
-      )}
+      {profession?.isWorking && <ProfessionWidget profession={profession} />}
 
       {/* Currencies — 3 column like real SMMO */}
       <div className="grid grid-cols-3 gap-2">

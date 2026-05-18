@@ -6,8 +6,6 @@ import {
   Clock,
   Crosshair,
   Filter,
-  Pause,
-  Play,
   ShieldCheck,
   SkipForward,
   Target,
@@ -26,7 +24,7 @@ export function PvpAssistantPage() {
   const blacklist = useQuery(api.gameData.getPvpBlacklist);
   const player = useQuery(api.gameData.getPlayerData);
   const rateLimit = useQuery(api.pvp.getRateLimit);
-  
+
   const updateStatus = useMutation(api.gameData.updatePvpTargetStatus);
   const addToBlacklist = useMutation(api.gameData.addToPvpBlacklist);
   const removeBlacklist = useMutation(api.gameData.removeFromPvpBlacklist);
@@ -47,13 +45,13 @@ export function PvpAssistantPage() {
     return queue
       .filter((t: Doc<"pvpAssistantQueue">) => {
         if (t.status === "completed" || t.status === "skipped") return false;
-        const min = minLevel ? Number.parseInt(minLevel) : 0;
-        const max = maxLevel ? Number.parseInt(maxLevel) : 999999;
+        const min = minLevel ? Number.parseInt(minLevel, 10) : 0;
+        const max = maxLevel ? Number.parseInt(maxLevel, 10) : 999999;
         if (t.targetLevel < min || t.targetLevel > max) return false;
         if (hideSafe && t.targetSafeMode) return false;
-        const goldMin = minGold ? Number.parseInt(minGold) : 0;
+        const goldMin = minGold ? Number.parseInt(minGold, 10) : 0;
         if (t.targetGold < goldMin) return false;
-        const hpMax = maxHpPercent ? Number.parseInt(maxHpPercent) : 100;
+        const hpMax = maxHpPercent ? Number.parseInt(maxHpPercent, 10) : 100;
         const hpPct =
           t.targetMaxHp > 0
             ? Math.round((t.targetHp / t.targetMaxHp) * 100)
@@ -82,7 +80,7 @@ export function PvpAssistantPage() {
   const handleNextTarget = async () => {
     if (filteredQueue.length === 0) return;
     const next = filteredQueue[0];
-    
+
     // Mark as attacking
     await updateStatus({
       targetId: next._id,
@@ -90,7 +88,10 @@ export function PvpAssistantPage() {
     });
 
     // In a real app, this might open the SMMO attack page or perform an action
-    window.open(`https://web.simple-mmo.com/user/attack/${next.targetPlayerId}`, "_blank");
+    window.open(
+      `https://web.simple-mmo.com/user/attack/${next.targetPlayerId}`,
+      "_blank",
+    );
   };
 
   const handleFetchNew = async () => {
@@ -186,7 +187,9 @@ export function PvpAssistantPage() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
             Rate Limit
           </p>
-          <p className={`text-lg font-bold ${ (rateLimit?.remaining ?? 0) < 5 ? "text-destructive" : "text-info" }`}>
+          <p
+            className={`text-lg font-bold ${(rateLimit?.remaining ?? 0) < 5 ? "text-destructive" : "text-info"}`}
+          >
             {rateLimit?.remaining ?? "--"}/{rateLimit?.limit ?? "40"}
           </p>
         </div>
