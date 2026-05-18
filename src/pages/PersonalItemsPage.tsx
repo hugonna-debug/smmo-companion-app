@@ -235,6 +235,16 @@ export function PersonalItemsPage() {
                     size="sm"
                     className="h-6 w-6 p-0"
                     onClick={() => toggleFav({ itemId: item._id })}
+                    aria-label={
+                      item.isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                    title={
+                      item.isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
                   >
                     {item.isFavorite ? (
                       <Star className="size-3.5 text-warning fill-warning" />
@@ -247,6 +257,8 @@ export function PersonalItemsPage() {
                     size="sm"
                     className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeItem({ itemId: item._id })}
+                    aria-label="Remove item"
+                    title="Remove item"
                   >
                     <Trash2 className="size-3" />
                   </Button>
