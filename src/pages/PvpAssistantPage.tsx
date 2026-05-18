@@ -25,13 +25,16 @@ export function PvpAssistantPage() {
   const queue = useQuery(api.gameData.getPvpAssistantQueue);
   const blacklist = useQuery(api.gameData.getPvpBlacklist);
   const player = useQuery(api.gameData.getPlayerData);
+  const rateLimit = useQuery(api.pvp.getRateLimit);
+  
   const updateStatus = useMutation(api.gameData.updatePvpTargetStatus);
   const addToBlacklist = useMutation(api.gameData.addToPvpBlacklist);
   const removeBlacklist = useMutation(api.gameData.removeFromPvpBlacklist);
+  const fetchTargets = useMutation(api.pvp.fetchPvpTargets);
 
   const [activeTab, setActiveTab] = useState<TabKey>("queue");
   const [showFilters, setShowFilters] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [minLevel, setMinLevel] = useState("");
   const [maxLevel, setMaxLevel] = useState("");
   const [minGold, setMinGold] = useState("");
@@ -76,8 +79,37 @@ export function PvpAssistantPage() {
     priorityFilter,
   ]);
 
+  const handleNextTarget = async () => {
+    if (filteredQueue.length === 0) return;
+    const next = filteredQueue[0];
+    
+    // Mark as attacking
+    await updateStatus({
+      targetId: next._id,
+      status: "attacking",
+    });
+
+    // In a real app, this might open the SMMO attack page or perform an action
+    window.open(`https://web.simple-mmo.com/user/attack/${next.targetPlayerId}`, "_blank");
+  };
+
+  const handleFetchNew = async () => {
+    try {
+      setIsFetching(true);
+      await fetchTargets({
+        minLevel: minLevel ? Number(minLevel) : undefined,
+        maxLevel: maxLevel ? Number(maxLevel) : undefined,
+      });
+    } catch (error) {
+      console.error("Failed to fetch targets:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   const completedCount =
-    queue?.filter((t: Doc<"pvpAssistantQueue">) => t.status === "completed").length ?? 0;
+    queue?.filter((t: Doc<"pvpAssistantQueue">) => t.status === "completed")
+      .length ?? 0;
 
   if (queue === undefined || blacklist === undefined || player === undefined) {
     return (
@@ -99,25 +131,28 @@ export function PvpAssistantPage() {
           <Crosshair className="size-5 text-chart-4" />
           <h1 className="text-lg font-bold">PvP Assistant</h1>
         </div>
-        {/* Start / Stop button */}
-        <Button
-          variant={isRunning ? "destructive" : "default"}
-          size="sm"
-          className="h-8 text-xs"
-          onClick={() => setIsRunning(!isRunning)}
-        >
-          {isRunning ? (
-            <>
-              <Pause className="size-3.5" />
-              Stop
-            </>
-          ) : (
-            <>
-              <Play className="size-3.5" />
-              Start Queue
-            </>
-          )}
-        </Button>
+        {/* Next Target (Manual) */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={handleFetchNew}
+            disabled={isFetching || (rateLimit?.remaining ?? 0) <= 0}
+          >
+            {isFetching ? "Fetching..." : "Fetch New"}
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            className="h-8 text-xs bg-chart-4 hover:bg-chart-4/80 text-white"
+            onClick={handleNextTarget}
+            disabled={filteredQueue.length === 0}
+          >
+            <ChevronRight className="size-3.5 mr-1" />
+            Next Target
+          </Button>
+        </div>
       </div>
 
       {/* Summary */}
@@ -149,26 +184,23 @@ export function PvpAssistantPage() {
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            Rate
+            Rate Limit
           </p>
-          <p className="text-lg font-bold text-info">40/min</p>
+          <p className={`text-lg font-bold ${ (rateLimit?.remaining ?? 0) < 5 ? "text-destructive" : "text-info" }`}>
+            {rateLimit?.remaining ?? "--"}/{rateLimit?.limit ?? "40"}
+          </p>
         </div>
       </div>
 
-      {/* Status indicator */}
-      {isRunning && (
-        <div className="game-card border-primary/30 bg-primary/5">
-          <div className="flex items-center gap-2">
-            <div className="size-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-xs text-primary font-medium">
-              Queue running — processing targets in priority order
-            </span>
-          </div>
-          <div className="mt-2 h-1 rounded-full bg-primary/20 overflow-hidden">
-            <div className="h-full rounded-full bg-primary animate-[progress_2s_ease-in-out_infinite] w-1/3" />
-          </div>
+      {/* Manual Control Notice */}
+      <div className="game-card border-chart-4/30 bg-chart-4/5 py-2">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="size-3.5 text-chart-4" />
+          <span className="text-[11px] text-chart-4 font-medium">
+            TOS Compliant: All actions require manual input. No automated loops.
+          </span>
         </div>
-      )}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
@@ -212,7 +244,8 @@ export function PvpAssistantPage() {
               {filteredQueue.length} of{" "}
               {
                 queue.filter(
-                  (t: Doc<"pvpAssistantQueue">) => t.status !== "completed" && t.status !== "skipped",
+                  (t: Doc<"pvpAssistantQueue">) =>
+                    t.status !== "completed" && t.status !== "skipped",
                 ).length
               }{" "}
               targets
@@ -345,181 +378,183 @@ export function PvpAssistantPage() {
             </div>
           ) : (
             <div className="space-y-1.5">
-              {filteredQueue.map((target: Doc<"pvpAssistantQueue">, index: number) => {
-                const hpPct =
-                  target.targetMaxHp > 0
-                    ? Math.round((target.targetHp / target.targetMaxHp) * 100)
-                    : 100;
-                const isLowHp = hpPct < 30;
-                const strAdvantage = player?.totalStr
-                  ? player.totalStr - (target.targetStr ?? 0)
-                  : 0;
+              {filteredQueue.map(
+                (target: Doc<"pvpAssistantQueue">, index: number) => {
+                  const hpPct =
+                    target.targetMaxHp > 0
+                      ? Math.round((target.targetHp / target.targetMaxHp) * 100)
+                      : 100;
+                  const isLowHp = hpPct < 30;
+                  const strAdvantage = player?.totalStr
+                    ? player.totalStr - (target.targetStr ?? 0)
+                    : 0;
 
-                return (
-                  <div
-                    key={target._id}
-                    className={`game-card ${target.status === "attacking" ? "border-primary/40" : ""}`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {/* Priority + index */}
-                      <div
-                        className={`size-7 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
-                          target.priority === 1
-                            ? "bg-destructive/10 text-destructive"
-                            : target.priority === 2
-                              ? "bg-warning/10 text-warning"
-                              : "bg-muted/30 text-muted-foreground"
-                        }`}
-                      >
-                        {index + 1}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold truncate">
-                            {target.targetName}
-                          </span>
-                          {target.targetSafeMode && (
-                            <span className="text-[9px] px-1 py-0.5 rounded bg-success/20 text-success font-medium flex items-center gap-0.5">
-                              <ShieldCheck className="size-2.5" />
-                              SAFE
-                            </span>
-                          )}
-                          {target.status === "attacking" && (
-                            <span className="text-[9px] px-1 py-0.5 rounded bg-primary/20 text-primary font-medium animate-pulse">
-                              ATTACKING
-                            </span>
-                          )}
+                  return (
+                    <div
+                      key={target._id}
+                      className={`game-card ${target.status === "attacking" ? "border-primary/40" : ""}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {/* Priority + index */}
+                        <div
+                          className={`size-7 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
+                            target.priority === 1
+                              ? "bg-destructive/10 text-destructive"
+                              : target.priority === 2
+                                ? "bg-warning/10 text-warning"
+                                : "bg-muted/30 text-muted-foreground"
+                          }`}
+                        >
+                          {index + 1}
                         </div>
 
-                        {/* Stats row */}
-                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground flex-wrap">
-                          <span>Lv. {formatNumber(target.targetLevel)}</span>
-                          {target.targetGuildName && (
-                            <span className="text-primary/70">
-                              ⚜ {target.targetGuildName}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold truncate">
+                              {target.targetName}
                             </span>
-                          )}
-                          <span className="text-gold-dim">
-                            💰 {formatGold(target.targetGold)}
-                          </span>
-                        </div>
-
-                        {/* Stat comparison */}
-                        <div className="flex items-center gap-3 mt-1 text-[10px]">
-                          {target.targetStr !== undefined && (
-                            <span className="text-chart-4">
-                              ⚔ {formatNumber(target.targetStr)}
-                            </span>
-                          )}
-                          {target.targetDef !== undefined && (
-                            <span className="text-chart-3">
-                              🛡 {formatNumber(target.targetDef)}
-                            </span>
-                          )}
-                          {strAdvantage !== 0 && (
-                            <span
-                              className={
-                                strAdvantage > 0
-                                  ? "text-success"
-                                  : "text-destructive"
-                              }
-                            >
-                              {strAdvantage > 0 ? "+" : ""}
-                              {formatNumber(strAdvantage)} STR vs you
-                            </span>
-                          )}
-                        </div>
-
-                        {/* HP bar */}
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-destructive transition-all"
-                              style={{ width: `${hpPct}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] font-mono text-destructive">
-                            {hpPct}%
-                          </span>
-                        </div>
-
-                        {/* Kill history + alerts */}
-                        <div className="flex items-center gap-3 mt-1 text-[10px]">
-                          {target.allyKills !== undefined &&
-                            target.allyKills > 0 && (
-                              <span className="text-success">
-                                ✓ {target.allyKills} kills by us
+                            {target.targetSafeMode && (
+                              <span className="text-[9px] px-1 py-0.5 rounded bg-success/20 text-success font-medium flex items-center gap-0.5">
+                                <ShieldCheck className="size-2.5" />
+                                SAFE
                               </span>
                             )}
-                          {target.enemyKills !== undefined &&
-                            target.enemyKills > 0 && (
-                              <span className="text-destructive">
-                                ✗ {target.enemyKills} kills on us
+                            {target.status === "attacking" && (
+                              <span className="text-[9px] px-1 py-0.5 rounded bg-primary/20 text-primary font-medium animate-pulse">
+                                ATTACKING
                               </span>
                             )}
-                          {target.attempts > 0 && (
-                            <span className="text-muted-foreground">
-                              <Clock className="size-2.5 inline mr-0.5" />
-                              {target.attempts} attempts
+                          </div>
+
+                          {/* Stats row */}
+                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground flex-wrap">
+                            <span>Lv. {formatNumber(target.targetLevel)}</span>
+                            {target.targetGuildName && (
+                              <span className="text-primary/70">
+                                ⚜ {target.targetGuildName}
+                              </span>
+                            )}
+                            <span className="text-gold-dim">
+                              💰 {formatGold(target.targetGold)}
                             </span>
+                          </div>
+
+                          {/* Stat comparison */}
+                          <div className="flex items-center gap-3 mt-1 text-[10px]">
+                            {target.targetStr !== undefined && (
+                              <span className="text-chart-4">
+                                ⚔ {formatNumber(target.targetStr)}
+                              </span>
+                            )}
+                            {target.targetDef !== undefined && (
+                              <span className="text-chart-3">
+                                🛡 {formatNumber(target.targetDef)}
+                              </span>
+                            )}
+                            {strAdvantage !== 0 && (
+                              <span
+                                className={
+                                  strAdvantage > 0
+                                    ? "text-success"
+                                    : "text-destructive"
+                                }
+                              >
+                                {strAdvantage > 0 ? "+" : ""}
+                                {formatNumber(strAdvantage)} STR vs you
+                              </span>
+                            )}
+                          </div>
+
+                          {/* HP bar */}
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-destructive transition-all"
+                                style={{ width: `${hpPct}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-mono text-destructive">
+                              {hpPct}%
+                            </span>
+                          </div>
+
+                          {/* Kill history + alerts */}
+                          <div className="flex items-center gap-3 mt-1 text-[10px]">
+                            {target.allyKills !== undefined &&
+                              target.allyKills > 0 && (
+                                <span className="text-success">
+                                  ✓ {target.allyKills} kills by us
+                                </span>
+                              )}
+                            {target.enemyKills !== undefined &&
+                              target.enemyKills > 0 && (
+                                <span className="text-destructive">
+                                  ✗ {target.enemyKills} kills on us
+                                </span>
+                              )}
+                            {target.attempts > 0 && (
+                              <span className="text-muted-foreground">
+                                <Clock className="size-2.5 inline mr-0.5" />
+                                {target.attempts} attempts
+                              </span>
+                            )}
+                          </div>
+
+                          {isLowHp && (
+                            <div className="flex items-center gap-1 mt-1 text-[9px] text-warning">
+                              <AlertTriangle className="size-2.5" />
+                              Low HP — high-priority target
+                            </div>
                           )}
                         </div>
 
-                        {isLowHp && (
-                          <div className="flex items-center gap-1 mt-1 text-[9px] text-warning">
-                            <AlertTriangle className="size-2.5" />
-                            Low HP — high-priority target
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex flex-col gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-primary hover:bg-primary/10"
-                          title="Attack next"
-                          onClick={() =>
-                            updateStatus({
-                              targetId: target._id,
-                              status: "attacking",
-                            })
-                          }
-                        >
-                          <ChevronRight className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-muted-foreground hover:text-warning"
-                          title="Skip"
-                          onClick={() =>
-                            updateStatus({
-                              targetId: target._id,
-                              status: "skipped",
-                            })
-                          }
-                        >
-                          <SkipForward className="size-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                          title="Blacklist"
-                          onClick={() =>
-                            addToBlacklist({ targetId: target._id })
-                          }
-                        >
-                          <Ban className="size-3" />
-                        </Button>
+                        {/* Actions */}
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-primary hover:bg-primary/10"
+                            title="Attack next"
+                            onClick={() =>
+                              updateStatus({
+                                targetId: target._id,
+                                status: "attacking",
+                              })
+                            }
+                          >
+                            <ChevronRight className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-warning"
+                            title="Skip"
+                            onClick={() =>
+                              updateStatus({
+                                targetId: target._id,
+                                status: "skipped",
+                              })
+                            }
+                          >
+                            <SkipForward className="size-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            title="Blacklist"
+                            onClick={() =>
+                              addToBlacklist({ targetId: target._id })
+                            }
+                          >
+                            <Ban className="size-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                },
+              )}
             </div>
           )}
         </div>

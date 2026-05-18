@@ -1,9 +1,13 @@
-import React from "react";
+import type React from "react";
 import { resetPreviewData } from "./convex-react-mock";
 
 const AUTH_KEY = "smmo_preview_logged_in";
 
-export const ConvexAuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const ConvexAuthProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   return <>{children}</>;
 };
 

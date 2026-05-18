@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 // Local storage key for auth status
 const AUTH_KEY = "smmo_preview_logged_in";
@@ -77,7 +78,7 @@ const createInitialData = () => {
         priority: 3,
         addedAt: Date.now() - 600000,
         attempts: 0,
-      }
+      },
     ],
     pvpBlacklist: [
       {
@@ -87,17 +88,18 @@ const createInitialData = () => {
         targetName: "ToxicGamer_PvP",
         reason: "Too high defense, keeps dodging",
         addedAt: Date.now() - 7200000,
-      }
+      },
     ],
     aiAdvisorMessages: [
       {
         _id: "msg_1",
         userId: "test-user-id",
         role: "assistant",
-        content: "Hello! I am your SMMO AI Advisor. I can analyze your stats, suggest the best targets in your PvP assistant queue, or help you maximize your trading profit in the market. Ask me anything!",
+        content:
+          "Hello! I am your SMMO AI Advisor. I can analyze your stats, suggest the best targets in your PvP assistant queue, or help you maximize your trading profit in the market. Ask me anything!",
         category: "general",
         timestamp: Date.now() - 60000,
-      }
+      },
     ],
     personalItems: [
       {
@@ -123,7 +125,7 @@ const createInitialData = () => {
         value: 2500000,
         imageUrl: "https://simplemmo.com/assets/items/elixir.png",
         isFavorite: false,
-      }
+      },
     ],
     vaultCodes: [
       {
@@ -135,7 +137,7 @@ const createInitialData = () => {
         rewardType: "gold",
         isRedeemed: false,
         addedAt: Date.now() - 3600000,
-      }
+      },
     ],
     collectionProgress: [],
     playerWatchlist: [
@@ -149,7 +151,7 @@ const createInitialData = () => {
         notes: "Sells cheap keys at 9 AM",
         addedAt: Date.now(),
         lastChecked: Date.now(),
-      }
+      },
     ],
     tasks: [
       {
@@ -161,7 +163,7 @@ const createInitialData = () => {
         targetAmount: 5,
         expReward: 1500,
         isCompleted: false,
-      }
+      },
     ],
     activeModifiers: [
       {
@@ -172,10 +174,10 @@ const createInitialData = () => {
         totalPercent: 15,
         sourceCount: 1,
         sources: [
-          { name: "SMMO Supporter Badge", percent: 15, isPermanent: true }
-        ]
-      }
-    ]
+          { name: "SMMO Supporter Badge", percent: 15, isPermanent: true },
+        ],
+      },
+    ],
   };
 };
 
@@ -214,7 +216,9 @@ export const ConvexProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export function useConvexAuth() {
-  const [isAuth, setIsAuth] = useState(localStorage.getItem(AUTH_KEY) === "true");
+  const [isAuth, setIsAuth] = useState(
+    localStorage.getItem(AUTH_KEY) === "true",
+  );
 
   useEffect(() => {
     const checkAuth = () => {
@@ -250,26 +254,41 @@ export function useQuery(apiFunction: any, ...args: any[]) {
 
   useEffect(() => {
     const path = getPath(apiFunction);
-    
+
     if (path.includes("getPlayerData")) {
       setData(previewData.playerData);
     } else if (path.includes("getPvpAssistantQueue")) {
       setData(previewData.pvpAssistantQueue);
     } else if (path.includes("getPvpBlacklist")) {
       setData(previewData.pvpBlacklist);
-    } else if (path.includes("getAiAdvisorMessages") || path.includes("aiAdvisorMessages")) {
+    } else if (
+      path.includes("getAiAdvisorMessages") ||
+      path.includes("aiAdvisorMessages")
+    ) {
       setData(previewData.aiAdvisorMessages);
-    } else if (path.includes("getPersonalItems") || path.includes("personalItems")) {
+    } else if (
+      path.includes("getPersonalItems") ||
+      path.includes("personalItems")
+    ) {
       setData(previewData.personalItems);
     } else if (path.includes("getVaultCodes") || path.includes("vaultCodes")) {
       setData(previewData.vaultCodes);
-    } else if (path.includes("getCollectionProgress") || path.includes("collectionProgress")) {
+    } else if (
+      path.includes("getCollectionProgress") ||
+      path.includes("collectionProgress")
+    ) {
       setData(previewData.collectionProgress);
-    } else if (path.includes("getPlayerWatchlist") || path.includes("playerWatchlist")) {
+    } else if (
+      path.includes("getPlayerWatchlist") ||
+      path.includes("playerWatchlist")
+    ) {
       setData(previewData.playerWatchlist);
     } else if (path.includes("getTasks") || path.includes("tasks")) {
       setData(previewData.tasks);
-    } else if (path.includes("getActiveModifiers") || path.includes("activeModifiers")) {
+    } else if (
+      path.includes("getActiveModifiers") ||
+      path.includes("activeModifiers")
+    ) {
       setData(previewData.activeModifiers);
     } else {
       setData([]);
@@ -287,7 +306,12 @@ export function useMutation(apiFunction: any) {
       const { targetPlayerId, status } = args;
       previewData.pvpAssistantQueue = previewData.pvpAssistantQueue.map(t => {
         if (t.targetPlayerId === targetPlayerId) {
-          return { ...t, status, attempts: t.attempts + 1, lastAttempt: Date.now() };
+          return {
+            ...t,
+            status,
+            attempts: t.attempts + 1,
+            lastAttempt: Date.now(),
+          };
         }
         return t;
       });
@@ -302,13 +326,20 @@ export function useMutation(apiFunction: any) {
           targetName,
           reason: reason || "Added in preview",
           addedAt: Date.now(),
-        }
+        },
       ];
-      previewData.pvpAssistantQueue = previewData.pvpAssistantQueue.filter(t => t.targetPlayerId !== targetPlayerId);
+      previewData.pvpAssistantQueue = previewData.pvpAssistantQueue.filter(
+        t => t.targetPlayerId !== targetPlayerId,
+      );
     } else if (path.includes("removeFromPvpBlacklist")) {
       const { targetPlayerId } = args;
-      previewData.pvpBlacklist = previewData.pvpBlacklist.filter(b => b.targetPlayerId !== targetPlayerId);
-    } else if (path.includes("addMessage") || path.includes("sendAiAdvisorMessage")) {
+      previewData.pvpBlacklist = previewData.pvpBlacklist.filter(
+        b => b.targetPlayerId !== targetPlayerId,
+      );
+    } else if (
+      path.includes("addMessage") ||
+      path.includes("sendAiAdvisorMessage")
+    ) {
       const { content, role } = args;
       previewData.aiAdvisorMessages = [
         ...previewData.aiAdvisorMessages,
@@ -318,7 +349,7 @@ export function useMutation(apiFunction: any) {
           role: role || "user",
           content,
           timestamp: Date.now(),
-        }
+        },
       ];
       if (role === "user") {
         setTimeout(() => {
@@ -330,7 +361,7 @@ export function useMutation(apiFunction: any) {
               role: "assistant",
               content: `This is a simulated preview response. SMMO Companion parsed your message: "${content}"`,
               timestamp: Date.now(),
-            }
+            },
           ];
           window.dispatchEvent(new Event("smmo_preview_update"));
         }, 800);
