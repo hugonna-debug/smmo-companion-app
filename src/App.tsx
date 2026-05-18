@@ -13,6 +13,7 @@ import {
   DashboardPage,
   EquipmentPage,
   GuildPage,
+  GuildManagement,
   LandingPage,
   LoginPage,
   MarketPage,
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/pvp" element={<PvpPage />} />
                 <Route path="/guild" element={<GuildPage />} />
+                <Route path="/guild-management" element={<GuildManagement />} />
                 <Route path="/bosses" element={<WorldBossPage />} />
                 <Route path="/buffs" element={<BuffsPage />} />
                 <Route path="/equipment" element={<EquipmentPage />} />

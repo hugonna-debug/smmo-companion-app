@@ -4,6 +4,7 @@ export { CollectionPage } from "./CollectionPage";
 export { DashboardPage } from "./DashboardPage";
 export { EquipmentPage } from "./EquipmentPage";
 export { GuildPage } from "./GuildPage";
+export { GuildManagement } from "./GuildManagement";
 export { LandingPage } from "./LandingPage";
 export { LoginPage } from "./LoginPage";
 export { MarketPage } from "./MarketPage";

@@ -434,6 +434,14 @@ const schema = defineSchema({
     refreshAt: v.optional(v.number()),
   }).index("by_userId", ["userId"]),
 
+  // Guild settings
+  guildSettings: defineTable({
+    userId: v.id("users"),
+    guildId: v.optional(v.number()),
+    discordWebhookUrl: v.optional(v.string()),
+    lastSyncAt: v.optional(v.number()),
+  }).index("by_userId", ["userId"]),
+
   // Active Modifiers (travel/chest/battle/quest)
   activeModifiers: defineTable({
     userId: v.id("users"),
