@@ -65,11 +65,13 @@ export function GuildManagement() {
   };
 
   // Pre-fill state when settings load
-  if (settings && !guildId && !discordWebhookUrl) {
-    if (settings.guildId) setGuildId(settings.guildId.toString());
-    if (settings.discordWebhookUrl)
-      setDiscordWebhookUrl(settings.discordWebhookUrl);
-  }
+  useEffect(() => {
+    if (settings) {
+      if (settings.guildId && !guildId) setGuildId(settings.guildId.toString());
+      if (settings.discordWebhookUrl && !discordWebhookUrl)
+        setDiscordWebhookUrl(settings.discordWebhookUrl);
+    }
+  }, [settings, guildId, discordWebhookUrl]);
 
   return (
     <div className="p-4 space-y-6 max-w-4xl mx-auto">
