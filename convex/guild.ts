@@ -64,6 +64,14 @@ export const updateSettings = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    if (
+      args.discordWebhookUrl &&
+      !args.discordWebhookUrl.startsWith("https://discord.com/api/webhooks/") &&
+      !args.discordWebhookUrl.startsWith("https://discordapp.com/api/webhooks/")
+    ) {
+      throw new Error("Invalid Discord webhook URL");
+    }
+
     const existing = await ctx.db
       .query("guildSettings")
       .withIndex("by_userId", q => q.eq("userId", userId))

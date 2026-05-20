@@ -1,0 +1,4 @@
+## 2023-11-20 - [HIGH] Fix SSRF in Discord Webhook Settings
+**Vulnerability:** Server-Side Request Forgery (SSRF) in `convex/guild.ts` via the `postToDiscord` function.
+**Learning:** The application allowed users to supply an arbitrary `discordWebhookUrl` when updating their guild settings. This URL was later fetched using a `POST` request with a JSON body by the Convex server action `syncMembers`. This meant an attacker could supply an internal network URL or an external malicious server to pivot attacks or exfiltrate data from the server.
+**Prevention:** Validate external URLs supplied by users against a strict allowlist of allowed domains/patterns before making HTTP requests. In this case, `discordWebhookUrl` must start with `https://discord.com/api/webhooks/` or `https://discordapp.com/api/webhooks/`.
