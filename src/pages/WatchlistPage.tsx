@@ -352,6 +352,7 @@ export function WatchlistPage() {
                     type="button"
                     onClick={() => removeEntry({ entryId: player._id })}
                     className="p-1.5 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors shrink-0"
+                    aria-label="Remove from watchlist"
                     title="Remove from watchlist"
                   >
                     <Trash2 className="size-3.5" />

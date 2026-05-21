@@ -290,6 +290,8 @@ function CollectionItem({
         className={`size-8 rounded-md flex items-center justify-center shrink-0 transition-all ${
           item.isOwned ? "bg-primary/15" : "bg-muted/20 hover:bg-primary/10"
         }`}
+        aria-label={item.isOwned ? "Mark as unowned" : "Mark as owned"}
+        title={item.isOwned ? "Mark as unowned" : "Mark as owned"}
       >
         {item.isOwned ? (
           <Check className={`size-3.5 ${RARITY_COLORS[rarity]}`} />
