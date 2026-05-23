@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { action, mutation, query } from "./_generated/server";
+import { action, internalMutation, query } from "./_generated/server";
 import { smmoFetchJson } from "./smmoApi";
 
 /**
@@ -78,7 +78,7 @@ export const fetchPvpTargets = action({
 /**
  * Internal mutation to process fetched targets and add them to the queue.
  */
-export const processAndQueueTargets = mutation({
+export const processAndQueueTargets = internalMutation({
   args: {
     targets: v.array(v.any()),
   },

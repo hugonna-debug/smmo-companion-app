@@ -1,7 +1,13 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { action, internalQuery, mutation, query } from "./_generated/server";
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { smmoCall } from "./syncPlayer";
 
 /**
@@ -21,7 +27,7 @@ export const getTrackedItemsInternal = internalQuery({
 /**
  * Appends a new price point to an item's history and updates current metrics.
  */
-export const updatePriceHistory = mutation({
+export const updatePriceHistory = internalMutation({
   args: {
     trackingId: v.id("marketTracking"),
     price: v.number(),
@@ -137,7 +143,7 @@ export const syncMarketPrices = action({
 /**
  * Internal mutation to update circulation count.
  */
-export const updateCirculationInternal = mutation({
+export const updateCirculationInternal = internalMutation({
   args: {
     trackingId: v.id("marketTracking"),
     circulation: v.number(),

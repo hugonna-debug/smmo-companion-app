@@ -1,0 +1,4 @@
+## 2026-05-23 - Convex Mutation IDOR Vulnerability
+**Vulnerability:** Convex actions exposed internal functionality directly as public `mutation` endpoints.
+**Learning:** In Convex, any `mutation`, `query`, or `action` exported from a file inside the `convex` directory becomes a public API endpoint by default. Internal functions that are meant to be called exclusively from other backend functions (e.g., from an `action`) must be defined using `internalMutation`, `internalQuery`, or `internalAction`.
+**Prevention:** When creating helper functions inside the Convex backend that modify the database, always use `internalMutation` and verify imports. Always ensure that the caller uses `internal.x.y` and that the target definition is strictly `internalMutation` to avoid IDOR and unauthorized public access.
