@@ -64,6 +64,24 @@ export const updateSettings = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    // SSRF Prevention: Ensure discord webhook URL is valid and targets discord.com
+    if (args.discordWebhookUrl) {
+      try {
+        const url = new URL(args.discordWebhookUrl);
+        if (
+          !(
+            url.hostname === "discord.com" ||
+            url.hostname.endsWith(".discord.com")
+          ) ||
+          !url.pathname.startsWith("/api/webhooks/")
+        ) {
+          throw new Error("Invalid Discord webhook URL");
+        }
+      } catch (_e) {
+        throw new Error("Invalid Discord webhook URL format");
+      }
+    }
+
     const existing = await ctx.db
       .query("guildSettings")
       .withIndex("by_userId", q => q.eq("userId", userId))
@@ -213,6 +231,18 @@ export const syncMembers = action({
 
 async function postToDiscord(webhookUrl: string, payload: any) {
   try {
+    // Defense in depth: Verify webhook URL before fetching to prevent SSRF
+    const url = new URL(webhookUrl);
+    if (
+      !(
+        url.hostname === "discord.com" || url.hostname.endsWith(".discord.com")
+      ) ||
+      !url.pathname.startsWith("/api/webhooks/")
+    ) {
+      console.error("SSRF Blocked: Invalid Discord webhook URL");
+      return;
+    }
+
     const res = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

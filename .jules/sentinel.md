@@ -1,0 +1,4 @@
+## 2024-05-24 - [SSRF in Discord Webhook Sync]
+**Vulnerability:** A Server-Side Request Forgery (SSRF) vulnerability existed where users could provide any arbitrary URL as their `discordWebhookUrl` in the `updateSettings` mutation, causing the backend server to send a POST request to that URL in `syncMembers`.
+**Learning:** Accepting user-provided URLs and fetching them from the backend without strict validation allows malicious actors to scan internal networks, hit internal Convex or AWS endpoints, or interact with other systems in unintended ways from the context of our backend server.
+**Prevention:** Always parse and validate user-supplied URLs to restrict them to their intended domains and paths (e.g., `discord.com/api/webhooks/`). Validation must happen on both write (mutation) and read (when the fetch actually happens) for defense-in-depth against data corruption or direct DB writes.
