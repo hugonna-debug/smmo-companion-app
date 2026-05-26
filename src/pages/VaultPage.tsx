@@ -217,6 +217,11 @@ export function VaultPage() {
                       {!code.isRedeemed && !isExp && (
                         <button
                           type="button"
+                          aria-label={
+                            copiedCode === code.code
+                              ? "Code copied"
+                              : "Copy code"
+                          }
                           onClick={() => handleCopy(code.code)}
                           className="text-muted-foreground hover:text-foreground transition-colors"
                         >
@@ -283,6 +288,11 @@ export function VaultPage() {
                     {!isExp && (
                       <button
                         type="button"
+                        aria-label={
+                          code.isRedeemed
+                            ? "Mark as not redeemed"
+                            : "Mark as redeemed"
+                        }
                         onClick={() => toggleRedeemed({ codeId: code._id })}
                         className={`p-1.5 rounded-md transition-colors ${
                           code.isRedeemed
@@ -300,6 +310,7 @@ export function VaultPage() {
                     )}
                     <button
                       type="button"
+                      aria-label="Remove code"
                       onClick={() => removeCode({ codeId: code._id })}
                       className="p-1.5 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
                       title="Remove code"
