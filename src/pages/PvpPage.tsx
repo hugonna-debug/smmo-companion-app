@@ -431,6 +431,7 @@ export function PvpPage() {
                         size="sm"
                         className="h-6 w-6 p-0 text-primary hover:bg-primary/10"
                         title="Attack this target"
+                        aria-label="Attack this target"
                       >
                         <ChevronRight className="size-4" />
                       </Button>
@@ -440,6 +441,7 @@ export function PvpPage() {
                         className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                         onClick={() => skipTarget({ targetId: target._id })}
                         title="Skip"
+                        aria-label="Skip"
                       >
                         <SkipForward className="size-3" />
                       </Button>

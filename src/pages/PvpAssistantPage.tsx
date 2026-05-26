@@ -518,6 +518,7 @@ export function PvpAssistantPage() {
                             size="sm"
                             className="h-6 w-6 p-0 text-primary hover:bg-primary/10"
                             title="Attack next"
+                            aria-label="Attack next"
                             onClick={() =>
                               updateStatus({
                                 targetId: target._id,
@@ -532,6 +533,7 @@ export function PvpAssistantPage() {
                             size="sm"
                             className="h-6 w-6 p-0 text-muted-foreground hover:text-warning"
                             title="Skip"
+                            aria-label="Skip"
                             onClick={() =>
                               updateStatus({
                                 targetId: target._id,
@@ -546,6 +548,7 @@ export function PvpAssistantPage() {
                             size="sm"
                             className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                             title="Blacklist"
+                            aria-label="Blacklist"
                             onClick={() =>
                               addToBlacklist({ targetId: target._id })
                             }
