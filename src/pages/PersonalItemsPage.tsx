@@ -234,6 +234,11 @@ export function PersonalItemsPage() {
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
+                    aria-label={
+                      item.isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
                     onClick={() => toggleFav({ itemId: item._id })}
                   >
                     {item.isFavorite ? (
@@ -245,6 +250,7 @@ export function PersonalItemsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    aria-label="Remove item"
                     className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeItem({ itemId: item._id })}
                   >
