@@ -245,6 +245,7 @@ export function PersonalItemsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    aria-label="Remove item"
                     className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeItem({ itemId: item._id })}
                   >
