@@ -163,8 +163,10 @@ export const setPriceAlert = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
     const item = await ctx.db.get(args.trackingId);
-    if (!item || (userId && item.userId !== userId)) return;
+    if (!item || item.userId !== userId) return;
 
     await ctx.db.patch(args.trackingId, {
       alertBelow: args.alertBelow ?? undefined,
