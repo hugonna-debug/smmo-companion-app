@@ -350,6 +350,7 @@ export function WatchlistPage() {
                   {/* Remove */}
                   <button
                     type="button"
+                    aria-label="Remove from watchlist"
                     onClick={() => removeEntry({ entryId: player._id })}
                     className="p-1.5 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors shrink-0"
                     title="Remove from watchlist"
