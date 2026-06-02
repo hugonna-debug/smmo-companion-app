@@ -1,4 +1,4 @@
-## 2024-05-26 - [Insecure Direct Object Reference / Broken Access Control in Convex]
-**Vulnerability:** Found `updatePriceHistory`, `updateCirculationInternal` and `processAndQueueTargets` were publicly exposed as `mutation` instead of `internalMutation`.
-**Learning:** Any function defined as `mutation` or `query` is exposed directly to clients via Convex API. This can allow users to bypass business logic and authorization if internal functions are incorrectly defined.
-**Prevention:** In Convex, ensure internal-only functions use `internalMutation`, `internalQuery`, or `internalAction` to prevent unintended public API exposure and IDOR vulnerabilities.
+## 2024-06-02 - IDOR Vulnerability in Convex Mutations due to Short-Circuit Logic
+**Vulnerability:** Unauthenticated IDOR in `setPriceAlert` public mutation allowing any user to modify price alerts of others.
+**Learning:** The logic `if (!item || (userId && item.userId !== userId))` was used to try to reuse code for both authenticated user calls and background tasks. In a public mutation, this allowed unauthenticated users (where `userId` is null) to bypass the `item.userId !== userId` check due to the short-circuiting of `userId &&`, allowing them to modify records they don't own.
+**Prevention:** In public Convex mutations, explicitly reject unauthenticated users (e.g., `if (!userId) throw new Error("Not authenticated");`) before performing authorization checks. For `internalMutation`s executed by background jobs/actions, it is acceptable to not require a `userId` as these legitimately run without user context, but this pattern must never be used in public `mutation`s.
