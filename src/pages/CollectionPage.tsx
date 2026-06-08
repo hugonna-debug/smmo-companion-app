@@ -137,6 +137,8 @@ export function CollectionPage() {
             <div key={cat.key}>
               <button
                 type="button"
+                aria-expanded={isExpanded}
+                aria-controls={`cat-content-${cat.key}`}
                 onClick={() => {
                   setActiveCategory(cat.key);
                   setExpandedCat(isExpanded ? null : cat.key);
@@ -165,7 +167,10 @@ export function CollectionPage() {
 
               {/* Expanded category detail */}
               {isExpanded && progress && (
-                <div className="ml-4 mr-2 mb-2 space-y-3">
+                <div
+                  id={`cat-content-${cat.key}`}
+                  className="ml-4 mr-2 mb-2 space-y-3"
+                >
                   {/* Chest Progress */}
                   <div className="game-card bg-secondary/20">
                     <div className="flex items-center gap-2 mb-1.5">
@@ -286,6 +291,13 @@ function CollectionItem({
     >
       <button
         type="button"
+        role="switch"
+        aria-checked={item.isOwned}
+        aria-label={
+          item.isOwned
+            ? `Mark ${item.itemName} as missing`
+            : `Mark ${item.itemName} as owned`
+        }
         onClick={onToggle}
         className={`size-8 rounded-md flex items-center justify-center shrink-0 transition-all ${
           item.isOwned ? "bg-primary/15" : "bg-muted/20 hover:bg-primary/10"
