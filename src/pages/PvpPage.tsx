@@ -309,6 +309,8 @@ export function PvpPage() {
                 <button
                   id="guildEnemies"
                   type="button"
+                  role="switch"
+                  aria-checked={guildEnemiesOnly}
                   onClick={() => setGuildEnemiesOnly(!guildEnemiesOnly)}
                   className={`relative w-10 h-5 rounded-full transition-colors ${
                     guildEnemiesOnly ? "bg-primary" : "bg-muted"
@@ -333,6 +335,8 @@ export function PvpPage() {
                 <button
                   id="safeModeFilter"
                   type="button"
+                  role="switch"
+                  aria-checked={hideSafeMode}
                   onClick={() => setHideSafeMode(!hideSafeMode)}
                   className={`relative w-10 h-5 rounded-full transition-colors ${
                     hideSafeMode ? "bg-primary" : "bg-muted"
