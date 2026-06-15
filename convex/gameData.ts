@@ -3218,6 +3218,7 @@ export const clearUserData = mutation({
       "equipment",
       "templeBoost",
       "guildInfo",
+      "guildSettings",
       "guildMembers",
       "guildContribution",
       "guildTask",

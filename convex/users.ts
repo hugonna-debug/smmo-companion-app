@@ -25,20 +25,46 @@ export const deleteAccount = mutation({
       await ctx.db.delete(session._id);
     }
 
-    const apiKeyRow = await ctx.db
-      .query("apiKeys")
-      .withIndex("by_userId", q => q.eq("userId", userId))
-      .unique();
-    if (apiKeyRow) {
-      await ctx.db.delete(apiKeyRow._id);
-    }
+    const tables = [
+      "playerData",
+      "playerSkills",
+      "equipment",
+      "templeBoost",
+      "guildInfo",
+      "guildSettings",
+      "guildMembers",
+      "guildContribution",
+      "guildTask",
+      "guildSanctuary",
+      "guildWars",
+      "pvpTargets",
+      "buffs",
+      "worldBosses",
+      "diamondMarket",
+      "orphanage",
+      "appSettings",
+      "apiKeys",
+      "marketTracking",
+      "personalItems",
+      "pvpAssistantQueue",
+      "pvpBlacklist",
+      "aiAdvisorMessages",
+      "vaultCodes",
+      "collectionProgress",
+      "playerWatchlist",
+      "tasks",
+      "activeModifiers",
+      "professionStatus",
+    ] as const;
 
-    const settings = await ctx.db
-      .query("appSettings")
-      .withIndex("by_userId", q => q.eq("userId", userId))
-      .unique();
-    if (settings?.apiKey !== undefined) {
-      await ctx.db.patch(settings._id, { apiKey: undefined });
+    for (const table of tables) {
+      const docs = await ctx.db
+        .query(table)
+        .withIndex("by_userId", q => q.eq("userId", userId))
+        .collect();
+      for (const doc of docs) {
+        await ctx.db.delete(doc._id);
+      }
     }
 
     await ctx.db.delete(userId);
