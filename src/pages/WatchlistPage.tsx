@@ -142,6 +142,7 @@ export function WatchlistPage() {
               key={f}
               type="button"
               onClick={() => setFilter(f)}
+              aria-pressed={filter === f}
               className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
                 filter === f
                   ? "bg-card text-foreground shadow-sm"
@@ -170,6 +171,8 @@ export function WatchlistPage() {
                 setSortAsc(false);
               }
             }}
+            aria-pressed={sortBy === key}
+            aria-label={`Sort by ${key === "level" ? "Level" : key === "str" ? "STR" : key === "lastActivity" ? "Activity" : "Name"} ${sortBy === key ? (sortAsc ? "(ascending)" : "(descending)") : ""}`.trim()}
             className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
               sortBy === key
                 ? "bg-primary/15 text-primary"
@@ -353,6 +356,7 @@ export function WatchlistPage() {
                     onClick={() => removeEntry({ entryId: player._id })}
                     className="p-1.5 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors shrink-0"
                     title="Remove from watchlist"
+                    aria-label={`Remove ${player.watchedPlayerName} from watchlist`}
                   >
                     <Trash2 className="size-3.5" />
                   </button>
