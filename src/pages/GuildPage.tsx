@@ -308,6 +308,13 @@ export function GuildPage() {
               <button
                 key={key}
                 type="button"
+                aria-label={`Sort by ${
+                  key === "level"
+                    ? "Level"
+                    : key === "pvpKills"
+                      ? "PvP Kills"
+                      : "Activity"
+                } ${sortBy === key ? (sortAsc ? "(ascending)" : "(descending)") : ""}`}
                 onClick={() => {
                   if (sortBy === key) setSortAsc(!sortAsc);
                   else {
