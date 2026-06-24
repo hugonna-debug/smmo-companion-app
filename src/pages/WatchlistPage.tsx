@@ -141,6 +141,7 @@ export function WatchlistPage() {
             <button
               key={f}
               type="button"
+              aria-pressed={filter === f}
               onClick={() => setFilter(f)}
               className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
                 filter === f
@@ -163,6 +164,15 @@ export function WatchlistPage() {
           <button
             key={key}
             type="button"
+            aria-label={`Sort by ${
+              key === "level"
+                ? "Level"
+                : key === "str"
+                  ? "STR"
+                  : key === "lastActivity"
+                    ? "Activity"
+                    : "Name"
+            } ${sortBy === key ? (sortAsc ? "(ascending)" : "(descending)") : ""}`}
             onClick={() => {
               if (sortBy === key) setSortAsc(!sortAsc);
               else {
