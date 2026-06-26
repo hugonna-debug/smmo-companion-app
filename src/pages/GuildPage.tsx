@@ -205,6 +205,7 @@ export function GuildPage() {
             <button
               key={tab}
               type="button"
+              aria-pressed={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
                 activeTab === tab
@@ -225,6 +226,7 @@ export function GuildPage() {
             <button
               key={tab}
               type="button"
+              aria-pressed={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${
                 activeTab === tab
@@ -304,36 +306,51 @@ export function GuildPage() {
           {/* Sort controls */}
           <div className="flex items-center gap-1.5 text-[10px]">
             <span className="text-muted-foreground">Sort:</span>
-            {(["level", "pvpKills", "lastActivity"] as const).map(key => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  if (sortBy === key) setSortAsc(!sortAsc);
-                  else {
-                    setSortBy(key);
-                    setSortAsc(false);
-                  }
-                }}
-                className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                  sortBy === key
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {key === "level"
+            {(["level", "pvpKills", "lastActivity"] as const).map(key => {
+              const isSorted = sortBy === key;
+              const sortLabel =
+                key === "level"
                   ? "Level"
                   : key === "pvpKills"
-                    ? "PvP Kills"
-                    : "Activity"}
-                {sortBy === key &&
-                  (sortAsc ? (
-                    <ChevronUp className="size-2.5" />
-                  ) : (
-                    <ChevronDown className="size-2.5" />
-                  ))}
-              </button>
-            ))}
+                    ? "PvP"
+                    : "Activity";
+              const ariaSort = isSorted
+                ? sortAsc
+                  ? "ascending"
+                  : "descending"
+                : "none";
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-label={`Sort by ${sortLabel} (${ariaSort})`}
+                  onClick={() => {
+                    if (sortBy === key) setSortAsc(!sortAsc);
+                    else {
+                      setSortBy(key);
+                      setSortAsc(false);
+                    }
+                  }}
+                  className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                    sortBy === key
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {key === "level"
+                    ? "Level"
+                    : key === "pvpKills"
+                      ? "PvP Kills"
+                      : "Activity"}
+                  {sortBy === key &&
+                    (sortAsc ? (
+                      <ChevronUp className="size-2.5" />
+                    ) : (
+                      <ChevronDown className="size-2.5" />
+                    ))}
+                </button>
+              );
+            })}
           </div>
 
           {sortedMembers.map(member => {
