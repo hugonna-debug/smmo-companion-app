@@ -2,3 +2,7 @@
 **Vulnerability:** Found `updatePriceHistory`, `updateCirculationInternal` and `processAndQueueTargets` were publicly exposed as `mutation` instead of `internalMutation`.
 **Learning:** Any function defined as `mutation` or `query` is exposed directly to clients via Convex API. This can allow users to bypass business logic and authorization if internal functions are incorrectly defined.
 **Prevention:** In Convex, ensure internal-only functions use `internalMutation`, `internalQuery`, or `internalAction` to prevent unintended public API exposure and IDOR vulnerabilities.
+## 2024-06-28 - IDOR Vulnerability via Short-Circuiting in Ownership Checks
+**Vulnerability:** In `convex/market.ts` (`setPriceAlert` mutation), an ownership check `if (!item || (userId && item.userId !== userId)) return;` allowed unauthenticated users (`userId` evaluates to `null`) to bypass the authorization check entirely. This meant any unauthenticated user could modify the tracking properties (like `alertBelow`) of items belonging to arbitrary users.
+**Learning:** Checking for user authentication and authorization must be distinct, non-coupled steps. Combining them with logical operators like `(userId && ...)` often introduces short-circuiting flaws that lead to IDOR and Broken Access Control vulnerabilities.
+**Prevention:** Always ensure an explicit authentication barrier (e.g., `if (!userId) throw new Error("Not authenticated");`) is placed immediately after fetching the user's ID and before performing any data retrieval or authorization logic.
