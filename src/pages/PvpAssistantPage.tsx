@@ -335,6 +335,9 @@ export function PvpAssistantPage() {
                 <button
                   id="paSafe"
                   type="button"
+                  role="switch"
+                  aria-checked={hideSafe}
+                  aria-label="Toggle Hide Safe Mode"
                   onClick={() => setHideSafe(!hideSafe)}
                   className={`relative w-10 h-5 rounded-full transition-colors ${hideSafe ? "bg-primary" : "bg-muted"}`}
                 >
