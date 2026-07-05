@@ -335,8 +335,10 @@ export function PvpAssistantPage() {
                 <button
                   id="paSafe"
                   type="button"
+                  role="switch"
+                  aria-checked={hideSafe}
                   onClick={() => setHideSafe(!hideSafe)}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${hideSafe ? "bg-primary" : "bg-muted"}`}
+                  className={`relative w-10 h-5 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${hideSafe ? "bg-primary" : "bg-muted"}`}
                 >
                   <div
                     className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform ${hideSafe ? "translate-x-5" : "translate-x-0"}`}
