@@ -126,6 +126,7 @@ export function PersonalItemsPage() {
             key={cat.key}
             type="button"
             onClick={() => setActiveCategory(cat.key)}
+            aria-pressed={activeCategory === cat.key}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all shrink-0 ${
               activeCategory === cat.key
                 ? "bg-card text-foreground shadow-sm border border-border"
@@ -152,6 +153,7 @@ export function PersonalItemsPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search items..."
+            aria-label="Search items"
             className="w-full h-8 text-xs bg-input border border-border rounded-md pl-7 pr-2 focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -160,6 +162,7 @@ export function PersonalItemsPage() {
           size="sm"
           className="h-8 px-2 text-[11px]"
           onClick={() => setShowFavsOnly(!showFavsOnly)}
+          aria-pressed={showFavsOnly}
         >
           <Star
             className={`size-3 ${showFavsOnly ? "text-warning fill-warning" : ""}`}
@@ -235,6 +238,16 @@ export function PersonalItemsPage() {
                     size="sm"
                     className="h-6 w-6 p-0"
                     onClick={() => toggleFav({ itemId: item._id })}
+                    aria-label={
+                      item.isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                    title={
+                      item.isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
                   >
                     {item.isFavorite ? (
                       <Star className="size-3.5 text-warning fill-warning" />
@@ -247,6 +260,8 @@ export function PersonalItemsPage() {
                     size="sm"
                     className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeItem({ itemId: item._id })}
+                    aria-label="Remove item"
+                    title="Remove item"
                   >
                     <Trash2 className="size-3" />
                   </Button>
