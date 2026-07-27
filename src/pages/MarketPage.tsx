@@ -146,6 +146,7 @@ export function MarketPage() {
                 size="sm"
                 className="h-8 px-2 text-[10px]"
                 onClick={() => toggleSort(key)}
+                aria-label={`Sort by ${key === "name" ? "A-Z" : key === "priceLow" ? "Price" : key === "circulation" ? "#" : "Δ"}${sortKey === key ? (sortDir === "asc" ? " (ascending)" : " (descending)") : ""}`}
               >
                 {key === "name"
                   ? "A-Z"

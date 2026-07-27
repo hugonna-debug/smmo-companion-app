@@ -355,6 +355,7 @@ export function PvpAssistantPage() {
                       size="sm"
                       className="h-7 text-[10px] flex-1"
                       onClick={() => setPriorityFilter(p)}
+                      aria-pressed={priorityFilter === p}
                     >
                       {p === null
                         ? "All"
