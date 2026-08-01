@@ -131,7 +131,11 @@ export function WatchlistPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
+      <div
+        className="flex gap-1 bg-secondary/50 rounded-lg p-0.5"
+        role="group"
+        aria-label="Filter options"
+      >
         {(["all", "friend", "enemy", "trader"] as const).map(f => {
           const count =
             f === "all"
@@ -147,6 +151,7 @@ export function WatchlistPage() {
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground"
               }`}
+              aria-pressed={filter === f}
             >
               {f === "all"
                 ? `All (${count})`
@@ -157,40 +162,56 @@ export function WatchlistPage() {
       </div>
 
       {/* Sort controls */}
-      <div className="flex items-center gap-1.5 text-[10px]">
+      <div
+        className="flex items-center gap-1.5 text-[10px]"
+        role="group"
+        aria-label="Sort options"
+      >
         <span className="text-muted-foreground">Sort:</span>
-        {(["level", "str", "lastActivity", "name"] as const).map(key => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => {
-              if (sortBy === key) setSortAsc(!sortAsc);
-              else {
-                setSortBy(key);
-                setSortAsc(false);
-              }
-            }}
-            className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-              sortBy === key
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {key === "level"
+        {(["level", "str", "lastActivity", "name"] as const).map(key => {
+          const isSortedByThis = sortBy === key;
+          const sortDirection = sortAsc ? "ascending" : "descending";
+          const label =
+            key === "level"
               ? "Level"
               : key === "str"
                 ? "STR"
                 : key === "lastActivity"
                   ? "Activity"
-                  : "Name"}
-            {sortBy === key &&
-              (sortAsc ? (
-                <ChevronUp className="size-2.5" />
-              ) : (
-                <ChevronDown className="size-2.5" />
-              ))}
-          </button>
-        ))}
+                  : "Name";
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                if (sortBy === key) setSortAsc(!sortAsc);
+                else {
+                  setSortBy(key);
+                  setSortAsc(false);
+                }
+              }}
+              className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                sortBy === key
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={isSortedByThis}
+              aria-label={
+                isSortedByThis
+                  ? `Sorted by ${label} (${sortDirection})`
+                  : `Sort by ${label}`
+              }
+            >
+              {label}
+              {sortBy === key &&
+                (sortAsc ? (
+                  <ChevronUp className="size-2.5" />
+                ) : (
+                  <ChevronDown className="size-2.5" />
+                ))}
+            </button>
+          );
+        })}
       </div>
 
       {/* Player List */}
@@ -353,6 +374,7 @@ export function WatchlistPage() {
                     onClick={() => removeEntry({ entryId: player._id })}
                     className="p-1.5 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors shrink-0"
                     title="Remove from watchlist"
+                    aria-label={`Remove ${player.watchedPlayerName} from watchlist`}
                   >
                     <Trash2 className="size-3.5" />
                   </button>
