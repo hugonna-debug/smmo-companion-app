@@ -125,6 +125,7 @@ export function PersonalItemsPage() {
           <button
             key={cat.key}
             type="button"
+            aria-pressed={activeCategory === cat.key}
             onClick={() => setActiveCategory(cat.key)}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all shrink-0 ${
               activeCategory === cat.key
@@ -160,6 +161,7 @@ export function PersonalItemsPage() {
           size="sm"
           className="h-8 px-2 text-[11px]"
           onClick={() => setShowFavsOnly(!showFavsOnly)}
+          aria-pressed={showFavsOnly}
         >
           <Star
             className={`size-3 ${showFavsOnly ? "text-warning fill-warning" : ""}`}
@@ -235,6 +237,12 @@ export function PersonalItemsPage() {
                     size="sm"
                     className="h-6 w-6 p-0"
                     onClick={() => toggleFav({ itemId: item._id })}
+                    aria-label={
+                      item.isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                    aria-pressed={item.isFavorite}
                   >
                     {item.isFavorite ? (
                       <Star className="size-3.5 text-warning fill-warning" />
@@ -247,6 +255,7 @@ export function PersonalItemsPage() {
                     size="sm"
                     className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeItem({ itemId: item._id })}
+                    aria-label="Remove item"
                   >
                     <Trash2 className="size-3" />
                   </Button>
