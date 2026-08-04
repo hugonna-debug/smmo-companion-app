@@ -160,6 +160,7 @@ export function PersonalItemsPage() {
           size="sm"
           className="h-8 px-2 text-[11px]"
           onClick={() => setShowFavsOnly(!showFavsOnly)}
+          aria-pressed={showFavsOnly}
         >
           <Star
             className={`size-3 ${showFavsOnly ? "text-warning fill-warning" : ""}`}
