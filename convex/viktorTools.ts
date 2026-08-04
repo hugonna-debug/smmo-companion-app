@@ -9,6 +9,7 @@
  *
  * To add a new tool, first test it to see the response shape.
  */
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 
@@ -50,7 +51,9 @@ async function callTool<T>(
 export const quickAiSearch = action({
   args: { query: v.string() },
   returns: v.string(),
-  handler: async (_ctx, { query }) => {
+  handler: async (ctx, { query }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     const result = await callTool<{ search_response: string }>(
       "quick_ai_search",
       {
@@ -75,7 +78,9 @@ export const generateImage = action({
     ),
   },
   returns: v.string(),
-  handler: async (_ctx, { prompt, aspectRatio }) => {
+  handler: async (ctx, { prompt, aspectRatio }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     const result = await callTool<{ response_text: string }>("text2im", {
       prompt,
       aspect_ratio: aspectRatio ?? "1:1",
